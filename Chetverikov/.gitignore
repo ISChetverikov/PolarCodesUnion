@@ -1,0 +1,10 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/x64
+/.vs/PolarSimulate/v15
+/results_plotting/.ipynb_checkpoints
+/results
+/src/trash.cpp
+/src/ScFanoTrashDecoder.cpp
