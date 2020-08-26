@@ -1,0 +1,60 @@
+for n 7 N 128 L 8 D 512 EbNo 0
+2.07 ms ± 37.8 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+9.21 ms ± 357 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+61 ms ± 15.2 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+for n 7 N 128 L 8 D 512 EbNo 1
+2.23 ms ± 63.4 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+5.22 ms ± 80.6 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+60.5 ms ± 13.3 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+for n 7 N 128 L 8 D 512 EbNo 2
+2.22 ms ± 73.4 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+5.8 ms ± 216 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+63 ms ± 14.2 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+for n 7 N 128 L 8 D 512 EbNo 3
+2.22 ms ± 85.4 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+5.22 ms ± 176 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+63.2 ms ± 14.2 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+for n 7 N 128 L 8 D 512 EbNo 4
+2.24 ms ± 60.5 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+5.35 ms ± 221 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+63.1 ms ± 14.5 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+for n 7 N 128 L 8 D 512 EbNo 5
+2.25 ms ± 111 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+5.23 ms ± 117 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+61.6 ms ± 13.4 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+for n 9 N 512 L 8 D 2048 EbNo 5
+8.81 ms ± 330 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+26.9 ms ± 1.37 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+622 ms ± 234 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+for n 9 N 512 L 8 D 512 EbNo 5
+8.67 ms ± 312 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+25.7 ms ± 1.76 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+646 ms ± 231 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+for n 9 N 512 L 8 D 256 EbNo 5
+9.17 ms ± 260 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+24.2 ms ± 836 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
+618 ms ± 179 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+
+N = 128
+SC                 | 2.22 ms ± 85.4 µs per loop  (mean ± std. dev. of 7 runs, 100 loops each)
+SCS L = 8, D = 512 | 5.22 ms ± 176 µs per loop   (mean ± std. dev. of 7 runs, 100 loops each)
+SCL L = 8          | 63.2 ms ± 14.2 ms per loop  (mean ± std. dev. of 7 runs, 10 loops each)
+
+N = 512
+SC                 | 8.67 ms ± 312 µs per loop   (mean ± std. dev. of 7 runs, 100 loops each)
+SCS L = 8, D = 512 | 25.7 ms ± 1.76 ms per loop  (mean ± std. dev. of 7 runs, 100 loops each)
+SCL L = 8          | 646 ms ± 231 ms per loop    (mean ± std. dev. of 7 runs, 10 loops each)
+
+
+
+
+

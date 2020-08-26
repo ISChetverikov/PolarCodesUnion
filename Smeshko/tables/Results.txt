@@ -1,0 +1,239 @@
+n = 7
+L = 8
+D = 512
+Successive Cancellation 0.0 with FER 0.8055555555555556
+Successive Cancellation List 0.0 with FER 0.5555555555555556
+Successive Cancellation Stack 0.0 with FER 0.5555555555555556
+Successive Cancellation 0.2 with FER 0.8529411764705882
+Successive Cancellation List 0.2 with FER 0.5882352941176471
+Successive Cancellation Stack 0.2 with FER 0.5882352941176471
+Successive Cancellation 0.4 with FER 0.6875
+Successive Cancellation List 0.4 with FER 0.4166666666666667
+Successive Cancellation Stack 0.4 with FER 0.4166666666666667
+Successive Cancellation 0.6 with FER 0.6140350877192983
+Successive Cancellation List 0.6 with FER 0.3508771929824561
+Successive Cancellation Stack 0.6 with FER 0.3508771929824561
+Successive Cancellation 0.8 with FER 0.5405405405405406
+Successive Cancellation List 0.8 with FER 0.2702702702702703
+Successive Cancellation Stack 0.8 with FER 0.2702702702702703
+Successive Cancellation 1.0 with FER 0.5066666666666667
+Successive Cancellation List 1.0 with FER 0.26666666666666666
+Successive Cancellation Stack 1.0 with FER 0.26666666666666666
+Successive Cancellation 1.2 with FER 0.32407407407407407
+Successive Cancellation List 1.2 with FER 0.18518518518518517
+Successive Cancellation Stack 1.2 with FER 0.18518518518518517
+Successive Cancellation 1.4 with FER 0.27624309392265195
+Successive Cancellation List 1.4 with FER 0.11049723756906077
+Successive Cancellation Stack 1.4 with FER 0.11049723756906077
+Successive Cancellation 1.6 with FER 0.3188405797101449
+Successive Cancellation List 1.6 with FER 0.14492753623188406
+Successive Cancellation Stack 1.6 with FER 0.14492753623188406
+Successive Cancellation 1.8 with FER 0.19008264462809918
+Successive Cancellation List 1.8 with FER 0.05509641873278237
+Successive Cancellation Stack 1.8 with FER 0.05509641873278237
+Successive Cancellation 2.0 with FER 0.15932203389830507
+Successive Cancellation List 2.0 with FER 0.06779661016949153
+Successive Cancellation Stack 2.0 with FER 0.06779661016949153
+Successive Cancellation 2.2 with FER 0.1232876712328767
+Successive Cancellation List 2.2 with FER 0.0547945205479452
+Successive Cancellation Stack 2.2 with FER 0.0547945205479452
+Successive Cancellation 2.4 with FER 0.06639566395663957
+Successive Cancellation List 2.4 with FER 0.02710027100271003
+Successive Cancellation Stack 2.4 with FER 0.02710027100271003
+Successive Cancellation 2.6 with FER 0.04852320675105485
+Successive Cancellation List 2.6 with FER 0.02109704641350211
+Successive Cancellation Stack 2.6 with FER 0.02109704641350211
+Successive Cancellation 2.8 with FER 0.030054644808743168
+Successive Cancellation List 2.8 with FER 0.01366120218579235
+Successive Cancellation Stack 2.8 with FER 0.01366120218579235
+Successive Cancellation 3.0 with FER 0.019865067466266866
+Successive Cancellation List 3.0 with FER 0.0074962518740629685
+Successive Cancellation Stack 3.0 with FER 0.0074962518740629685
+Successive Cancellation 3.2 with FER 0.017413856984068173
+Successive Cancellation List 3.2 with FER 0.007410151908114116
+Successive Cancellation Stack 3.2 with FER 0.007410151908114116
+Successive Cancellation 3.4 with FER 0.007599537419461424
+Successive Cancellation List 3.4 with FER 0.0033041467041136628
+Successive Cancellation Stack 3.4 with FER 0.0033041467041136628
+Successive Cancellation 3.6 with FER 0.00519862677783227
+Successive Cancellation List 3.6 with FER 0.00196174595389897
+Successive Cancellation Stack 3.6 with FER 0.00196174595389897
+Successive Cancellation 3.8 with FER 0.0033400133600534404
+Successive Cancellation List 3.8 with FER 0.0014844503822459734
+Successive Cancellation Stack 3.8 with FER 0.0014844503822459734
+Successive Cancellation 4.0 with FER 0.002086078173034695
+Successive Cancellation List 4.0 with FER 0.0010979358805445762
+Successive Cancellation Stack 4.0 with FER 0.0010979358805445762
+Successive Cancellation 4.2 with FER 0.0010056507997318264
+Successive Cancellation List 4.2 with FER 0.00047888133320563166
+Successive Cancellation Stack 4.2 with FER 0.00047888133320563166
+n = 9
+L = 8
+D = 512
+Successive Cancellation 0.0 with FER 1.0
+Successive Cancellation List 0.0 with FER 0.9523809523809523
+Successive Cancellation Stack 0.0 with FER 0.9523809523809523
+Successive Cancellation 0.2 with FER 0.9166666666666666
+Successive Cancellation List 0.2 with FER 0.8333333333333334
+Successive Cancellation Stack 0.2 with FER 0.8333333333333334
+Successive Cancellation 0.4 with FER 0.9393939393939394
+Successive Cancellation List 0.4 with FER 0.6060606060606061
+Successive Cancellation Stack 0.4 with FER 0.6060606060606061
+Successive Cancellation 0.6 with FER 0.9459459459459459
+Successive Cancellation List 0.6 with FER 0.5405405405405406
+Successive Cancellation Stack 0.6 with FER 0.5405405405405406
+Successive Cancellation 0.8 with FER 0.8387096774193549
+Successive Cancellation List 0.8 with FER 0.3225806451612903
+Successive Cancellation Stack 0.8 with FER 0.3225806451612903
+Successive Cancellation 1.0 with FER 0.6885245901639344
+Successive Cancellation List 1.0 with FER 0.32786885245901637
+Successive Cancellation Stack 1.0 with FER 0.32786885245901637
+Successive Cancellation 1.2 with FER 0.5537190082644629
+Successive Cancellation List 1.2 with FER 0.1652892561983471
+Successive Cancellation Stack 1.2 with FER 0.1652892561983471
+Successive Cancellation 1.4 with FER 0.4177215189873418
+Successive Cancellation List 1.4 with FER 0.12658227848101267
+Successive Cancellation Stack 1.4 with FER 0.12658227848101267
+Successive Cancellation 1.6 with FER 0.3879781420765027
+Successive Cancellation List 1.6 with FER 0.1092896174863388
+Successive Cancellation Stack 1.6 with FER 0.1092896174863388
+Successive Cancellation 1.8 with FER 0.225
+Successive Cancellation List 1.8 with FER 0.065
+Successive Cancellation Stack 1.8 with FER 0.065
+Successive Cancellation 2.0 with FER 0.155
+Successive Cancellation List 2.0 with FER 0.03
+Successive Cancellation Stack 2.0 with FER 0.03
+Successive Cancellation 2.2 with FER 0.105
+Successive Cancellation List 2.2 with FER 0.02
+Successive Cancellation Stack 2.2 with FER 0.02
+Successive Cancellation 2.4 with FER 0.05
+Successive Cancellation List 2.4 with FER 0.015
+Successive Cancellation Stack 2.4 with FER 0.015
+Successive Cancellation 2.6 with FER 0.025
+Successive Cancellation List 2.6 with FER 0.015
+Successive Cancellation Stack 2.6 with FER 0.015
+Successive Cancellation 2.8 with FER 0.005
+Successive Cancellation List 2.8 with FER 0.005
+Successive Cancellation Stack 2.8 with FER 0.005
+Successive Cancellation 3.0 with FER 0.009426425946636842, 6259
+Successive Cancellation List 3.0 with FER 0.003195398625978591
+Successive Cancellation Stack 3.0 with FER 0.003195398625978591
+Successive Cancellation 3.2 with FER 0.004256124089662348, 10573
+Successive Cancellation List 3.2 with FER 0.0018916107065165989
+Successive Cancellation Stack 3.2 with FER 0.0018916107065165989
+
+n = 8
+L = 16
+D = 256
+Successive Cancellation 0.0 with FER 0.925, 200
+Successive Cancellation List 0.0 with FER 0.71
+Successive Cancellation Stack 0.0 with FER 0.71
+Successive Cancellation 0.2 with FER 0.85, 200
+Successive Cancellation List 0.2 with FER 0.655
+Successive Cancellation Stack 0.2 with FER 0.655
+Successive Cancellation 0.4 with FER 0.8, 200
+Successive Cancellation List 0.4 with FER 0.475
+Successive Cancellation Stack 0.4 with FER 0.475
+Successive Cancellation 0.6 with FER 0.735, 200
+Successive Cancellation List 0.6 with FER 0.365
+Successive Cancellation Stack 0.6 with FER 0.365
+Successive Cancellation 0.8 with FER 0.62, 200
+Successive Cancellation List 0.8 with FER 0.285
+Successive Cancellation Stack 0.8 with FER 0.285
+Successive Cancellation 1.0 with FER 0.5, 200
+Successive Cancellation List 1.0 with FER 0.21
+Successive Cancellation Stack 1.0 with FER 0.21
+Successive Cancellation 1.2 with FER 0.42, 200
+Successive Cancellation List 1.2 with FER 0.13
+Successive Cancellation Stack 1.2 with FER 0.13
+Successive Cancellation 1.4 with FER 0.4036697247706422, 218
+Successive Cancellation List 1.4 with FER 0.09174311926605505
+Successive Cancellation Stack 1.4 with FER 0.09174311926605505
+Successive Cancellation 1.6 with FER 0.2857142857142857, 231
+Successive Cancellation List 1.6 with FER 0.08658008658008658
+Successive Cancellation Stack 1.6 with FER 0.08658008658008658
+Successive Cancellation 1.8 with FER 0.2318181818181818, 440
+Successive Cancellation List 1.8 with FER 0.045454545454545456
+Successive Cancellation Stack 1.8 with FER 0.045454545454545456
+Successive Cancellation 2.0 with FER 0.17463235294117646, 544
+Successive Cancellation List 2.0 with FER 0.03676470588235294
+Successive Cancellation Stack 2.0 with FER 0.03676470588235294
+Successive Cancellation 2.2 with FER 0.10872675250357654, 699
+Successive Cancellation List 2.2 with FER 0.02861230329041488
+Successive Cancellation Stack 2.2 with FER 0.02861230329041488
+Successive Cancellation 2.4 with FER 0.07142857142857142, 1400
+Successive Cancellation List 2.4 with FER 0.014285714285714285
+Successive Cancellation Stack 2.4 with FER 0.014285714285714285
+Successive Cancellation 2.6 with FER 0.04945054945054945, 3094
+Successive Cancellation List 2.6 with FER 0.006464124111182934
+Successive Cancellation Stack 2.6 with FER 0.006464124111182934
+Successive Cancellation 2.8 with FER 0.023168103448275863, 3712
+Successive Cancellation List 2.8 with FER 0.005387931034482759
+Successive Cancellation Stack 2.8 with FER 0.005387931034482759
+Successive Cancellation 3.0 with FER 0.020454545454545454, 3960
+Successive Cancellation List 3.0 with FER 0.005050505050505051
+Successive Cancellation Stack 3.0 with FER 0.005050505050505051
+Successive Cancellation 3.2 with FER 0.008276598584968629, 7491
+Successive Cancellation List 3.2 with FER 0.002669870511280203
+Successive Cancellation Stack 3.2 with FER 0.002669870511280203
+
+n = 8
+L = 8
+D = 256
+Successive Cancellation 0.0 with FER 0.855, 200
+Successive Cancellation List 0.0 with FER 0.665
+Successive Cancellation Stack 0.0 with FER 0.665
+Successive Cancellation 0.2 with FER 0.85, 200
+Successive Cancellation List 0.2 with FER 0.6
+Successive Cancellation Stack 0.2 with FER 0.6
+Successive Cancellation 0.4 with FER 0.835, 200
+Successive Cancellation List 0.4 with FER 0.535
+Successive Cancellation Stack 0.4 with FER 0.535
+Successive Cancellation 0.6 with FER 0.75, 200
+Successive Cancellation List 0.6 with FER 0.405
+Successive Cancellation Stack 0.6 with FER 0.405
+Successive Cancellation 0.8 with FER 0.625, 200
+Successive Cancellation List 0.8 with FER 0.32
+Successive Cancellation Stack 0.8 with FER 0.32
+Successive Cancellation 1.0 with FER 0.595, 200
+Successive Cancellation List 1.0 with FER 0.21
+Successive Cancellation Stack 1.0 with FER 0.21
+Successive Cancellation 1.2 with FER 0.425, 200
+Successive Cancellation List 1.2 with FER 0.17
+Successive Cancellation Stack 1.2 with FER 0.17
+Successive Cancellation 1.4 with FER 0.3515625, 256
+Successive Cancellation List 1.4 with FER 0.078125
+Successive Cancellation Stack 1.4 with FER 0.078125
+Successive Cancellation 1.6 with FER 0.35, 200
+Successive Cancellation List 1.6 with FER 0.1
+Successive Cancellation Stack 1.6 with FER 0.1
+Successive Cancellation 1.8 with FER 0.21963824289405684, 387
+Successive Cancellation List 1.8 with FER 0.05167958656330749
+Successive Cancellation Stack 1.8 with FER 0.05167958656330749
+Successive Cancellation 2.0 with FER 0.18298969072164947, 388
+Successive Cancellation List 2.0 with FER 0.05154639175257732
+Successive Cancellation Stack 2.0 with FER 0.05154639175257732
+Successive Cancellation 2.2 with FER 0.12371134020618557, 776
+Successive Cancellation List 2.2 with FER 0.02577319587628866
+Successive Cancellation Stack 2.2 with FER 0.02577319587628866
+Successive Cancellation 2.4 with FER 0.06719022687609075, 2292
+Successive Cancellation List 2.4 with FER 0.008726003490401396
+Successive Cancellation Stack 2.4 with FER 0.008726003490401396
+Successive Cancellation 2.6 with FER 0.03650860260176248, 2383
+Successive Cancellation List 2.6 with FER 0.00839278220730172
+Successive Cancellation Stack 2.6 with FER 0.00839278220730172
+Successive Cancellation 2.8 with FER 0.02875399361022364, 3443
+Successive Cancellation List 2.8 with FER 0.005808887598024978
+Successive Cancellation Stack 2.8 with FER 0.005808887598024978
+Successive Cancellation 3.0 with FER 0.017737848422022577, 4341
+Successive Cancellation List 3.0 with FER 0.0046072333563695
+Successive Cancellation Stack 3.0 with FER 0.0046072333563695
+Successive Cancellation 3.2 with FER 0.008357113738279657, 9812
+Successive Cancellation List 3.2 with FER 0.0020383204239706482
+Successive Cancellation Stack 3.2 with FER 0.0020383204239706482
+Successive Cancellation 3.4 with FER 0.0054186331061003325, 11442
+Successive Cancellation List 3.4 with FER 0.0017479461632581717
+Successive Cancellation Stack 3.4 with FER 0.0017479461632581717
+Successive Cancellation 3.6 with FER 0.003007241929544618, 16294
+Successive Cancellation List 3.6 with FER 0.0012274456855284155
+Successive Cancellation Stack 3.6 with FER 0.0012274456855284155
