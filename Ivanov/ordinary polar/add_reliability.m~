@@ -1,0 +1,22 @@
+function Mrel = add_reliability(MasT,y,f)
+% Mrel=[];
+% yy=y;
+% yy(f==0)=1e3;
+% yy=abs(yy);
+% if ~isempty(MasT)
+%     for i=1:size(MasT,1)
+%         Mrel=[Mrel; [MasT(i,:) min(yy(MasT(i,1):MasT(i,2)))]];
+%     end
+% end
+% end
+
+Mrel=[];
+yy=y;
+yy(f==0)=1e3;
+yy=abs(yy);
+if ~isempty(MasT)
+    for i=1:size(MasT,1)
+        Mrel=[Mrel; [MasT(i,:) min(yy(MasT(i,1):MasT(i,2)))]];
+    end
+end
+end

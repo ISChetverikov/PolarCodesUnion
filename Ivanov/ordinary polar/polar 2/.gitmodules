@@ -1,0 +1,3 @@
+[submodule "mexbind0x"]
+	path = mexbind0x
+	url = git@lab3.iitp.ru:krsch/mexbind0x.git
