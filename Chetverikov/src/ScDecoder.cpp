@@ -22,19 +22,31 @@ domain ScDecoder::GetDomain() {
 	return LLR;
 }
 
-double f(double x, double y) {
-	double sign = 1.0;
+//double f(double x, double y) {
+//	double sign = 1.0;
+//
+//	if (x < 0) {
+//		sign *= -1;
+//		x *= -1;
+//	}
+//	if (y < 0) {
+//		sign *= -1;
+//		y *= -1;
+//	}
+//		
+//	return ((x < y) ? x  : y ) * sign;
+//}
 
-	if (x < 0) {
-		sign *= -1;
-		x *= -1;
-	}
-	if (y < 0) {
-		sign *= -1;
-		y *= -1;
-	}
-		
-	return ((x < y) ? x  : y ) * sign;
+double f(double llr1, double llr2) {
+	double prod = tanh(llr1 / 2) * tanh(llr2 / 2);
+	double limit = 0.9999999999999999;
+
+	if (prod > limit)
+		prod = limit;
+	if (prod < -limit)
+		prod = -limit;
+
+	return 2 * atanh(prod);
 }
 
 double g(double x, double y, int b) {

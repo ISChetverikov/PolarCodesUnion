@@ -33,6 +33,7 @@ ScFlipDecoder::ScFlipDecoder(PolarCode * codePtr, int T) : BaseDecoder(codePtr) 
 	_mask = _codePtr->BitsMask();
 	_x = std::vector<int>(n, -1);
 	_T = T;
+	_crcPtr = new CRC(_codePtr->CrcPoly());
 }
 
 domain ScFlipDecoder::GetDomain() {
@@ -118,7 +119,6 @@ void ScFlipDecoder::PassDown(size_t iter) {
 		binaryIter[i] = iterCopy % 2;
 		iterCopy = iterCopy >> 1;
 	}
-
 	size_t length = (size_t)1 << (m - level - 1);
 	for (size_t i = level; i < m; i++)
 	{
@@ -172,6 +172,66 @@ void ScFlipDecoder::PassUp(size_t iter) {
 	}
 }
 
+void ScFlipDecoder::DecodeFrom(int position) {
+	size_t n = _codePtr->N();
+	size_t m = _codePtr->m();
+
+	PassUp(position);
+	for (size_t i = position + 1; i < n; i++)
+	{
+		PassDown(i);
+		if (_mask[i]) {
+			_x[i] = L(_beliefTree[m][i]);
+		}
+		else {
+			_x[i] = FROZEN_VALUE;
+		}
+		_uhatTree[m][i] = _x[i];
+		PassUp(i);
+	}
+}
+
+bool ScFlipDecoder::IsCrcPassed(std::vector<int> codeword) {
+	size_t n = codeword.size();
+	size_t k = _codePtr->k();
+	size_t deg = _codePtr->CrcDeg();
+
+	auto wordBits = _codePtr->UnfrozenBits();
+	std::vector<int> word(n, 0);
+	for (size_t i = 0; i < k; i++)
+	{
+		word[i] = codeword[wordBits[i]];
+	}
+
+	auto crcBits = _codePtr->CrcUnfrozenBits();
+	std::vector<int> crc(deg, 0);
+	for (size_t i = 0; i < deg; i++)
+	{
+		crc[i] = codeword[crcBits[i]];
+	}
+
+	auto crcReal = _crcPtr->Calculate(word);
+	return crc == crcReal;
+}
+
+std::vector<int> ScFlipDecoder::GetSmallestLlrsIndices(std::vector<double> llrs, int count) {
+	std::vector<int> indices(count, 0);
+	for (size_t i = 0; i < llrs.size(); i++)
+	{
+		llrs[i] = fabs(llrs[i]);
+	}
+
+	for (size_t i = 0; i < count; i++)
+	{
+		auto minIt = std::min_element(llrs.begin(), llrs.end());
+		auto minInd = (int)std::distance( llrs.begin(), minIt);
+		indices[i] = minInd;
+		llrs.erase(minIt);
+	}
+	
+	return indices;
+}
+
 std::vector<int> ScFlipDecoder::Decode(std::vector<double> inLlr) {
 	size_t n = inLlr.size();
 	size_t m = _codePtr->m();
@@ -192,6 +252,20 @@ std::vector<int> ScFlipDecoder::Decode(std::vector<double> inLlr) {
 		}
 		_uhatTree[m][i] = _x[i];
 		PassUp(i);
+	}
+
+	if (_T > 0 && !IsCrcPassed(_x)) {
+		std::vector<int> suspectedBits = GetSmallestLlrsIndices(_beliefTree[m], _T);
+		for (size_t i = 0; i < _T; i++)
+		{
+			int bitPosition = suspectedBits[i];
+			_x[bitPosition] = !_x[bitPosition];
+
+			DecodeFrom(bitPosition);
+
+			if (IsCrcPassed(_x))
+				break;
+		}
 	}
 
 	std::vector<int> result(k, 0);

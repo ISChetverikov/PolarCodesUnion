@@ -128,3 +128,5 @@ public:
 	CrcPolyException(const std::string err) : m_error(err.c_str()) {};
 	const char* what() const noexcept { return m_error.c_str(); }
 };
+
+

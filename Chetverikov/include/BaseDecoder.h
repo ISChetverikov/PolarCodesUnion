@@ -16,7 +16,7 @@ public:
 	BaseDecoder(PolarCode * codePtr);
 	
 	virtual domain GetDomain() = 0;
-	void SetSigma(double sigma);
+	virtual void SetSigma(double sigma);
 	double GetSigma();
 	virtual std::vector<int> Decode(std::vector<double> llr) = 0;
 	virtual ~BaseDecoder() {};

@@ -33,6 +33,7 @@
     <ClInclude Include="include\ScDecoder.h" />
     <ClInclude Include="include\ScFanoDecoder.h" />
     <ClInclude Include="include\ScFlipDecoder.h" />
+    <ClInclude Include="include\ScFlipProgDecoder.h" />
     <ClInclude Include="include\Simulate.h" />
     <ClInclude Include="include\SimulationParameters.h" />
     <ClInclude Include="include\SimulationType.h" />
@@ -52,6 +53,7 @@
     <ClCompile Include="src\ScDecoder.cpp" />
     <ClCompile Include="src\ScFanoDecoder.cpp" />
     <ClCompile Include="src\ScFlipDecoder.cpp" />
+    <ClCompile Include="src\ScFlipProgDecoder.cpp" />
     <ClCompile Include="src\Simulate.cpp" />
     <ClCompile Include="src\SimulationType.cpp" />
     <ClCompile Include="src\gaTe.cpp" />

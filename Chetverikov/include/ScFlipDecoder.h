@@ -2,6 +2,7 @@
 
 #include "BaseDecoder.h"
 #include "Domain.h"
+#include "CRC.h"
 
 class ScFlipDecoder : public BaseDecoder {
 
@@ -11,7 +12,8 @@ private:
 	size_t _treeHeight;
 	std::vector<int> _mask;
 	std::vector<int> _x;
-	double _T;
+	int _T;
+	CRC * _crcPtr;
 
 	double f(double llr1, double llr2);
 	double g(double llr1, double llr2, int u1);
@@ -30,6 +32,10 @@ private:
 
 	void PassDown(size_t iter);
 	void PassUp(size_t iter);
+
+	void DecodeFrom(int position);
+	bool IsCrcPassed(std::vector<int> codeword);
+	std::vector<int> GetSmallestLlrsIndices(std::vector<double> llrs, int count);
 
 public:
 	ScFlipDecoder(PolarCode * code, int T);

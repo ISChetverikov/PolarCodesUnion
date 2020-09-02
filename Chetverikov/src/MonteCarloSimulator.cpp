@@ -7,7 +7,7 @@ MonteCarloSimulator::MonteCarloSimulator(int maxTestsCount,
 	int maxRejectionsCount,
 	PolarCode * codePtr,
 	Encoder * encoderPtr,
-	BaseDecoder * decoderPtr) : BaseSimulator(codePtr, encoderPtr, decoderPtr) 
+	BaseDecoder * decoderPtr, bool isSigmaDependOnR) : BaseSimulator(codePtr, encoderPtr, decoderPtr, isSigmaDependOnR)
 {
 	_maxTestsCount = maxTestsCount;
 	_maxRejectionsCount = maxRejectionsCount;
@@ -57,7 +57,7 @@ SimulationIterationResults MonteCarloSimulator::Run(double snr)
 		tests++;
 
 		std::generate(word.begin(), word.end(), [&]() { return uniform_discrete_dist(randomDevice); });
-	
+		// word = { 0 , 0, 0,  1 };
 		codeword = _encoderPtr->Encode(word);
 
 		for (size_t i = 0; i < n; i++) {
