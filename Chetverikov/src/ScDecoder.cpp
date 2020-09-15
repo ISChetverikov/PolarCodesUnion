@@ -4,6 +4,7 @@
 #include <cmath>
 #include <string>
 #include <iostream>
+#include <queue>
 #include <algorithm>
 
 #include "../include/PolarCode.h"
@@ -13,126 +14,187 @@
 
 #define DBL_MAX 1.7976931348623158e+308 
 #define FROZEN_VALUE 0
- 
 
-ScDecoder::ScDecoder(PolarCode * codePtr) :  BaseDecoder(codePtr) {
-}
+ScDecoder::ScDecoder(PolarCode * codePtr) : BaseDecoder(codePtr) {
+	size_t m = _codePtr->m();
+	size_t n = _codePtr->N();
+	_treeHeight = m + 1;
 
-domain ScDecoder::GetDomain() {
-	return LLR;
-}
-
-//double f(double x, double y) {
-//	double sign = 1.0;
-//
-//	if (x < 0) {
-//		sign *= -1;
-//		x *= -1;
-//	}
-//	if (y < 0) {
-//		sign *= -1;
-//		y *= -1;
-//	}
-//		
-//	return ((x < y) ? x  : y ) * sign;
-//}
-
-double f(double llr1, double llr2) {
-	double prod = tanh(llr1 / 2) * tanh(llr2 / 2);
-	double limit = 0.9999999999999999;
-
-	if (prod > limit)
-		prod = limit;
-	if (prod < -limit)
-		prod = -limit;
-
-	return 2 * atanh(prod);
-}
-
-double g(double x, double y, int b) {
-	return y + (1 - 2 * b) * x;
-}
-
-
-std::vector<double>  GetLeftMessage(std::vector<double>::iterator leftIt, std::vector<double>::iterator rightIt, size_t n) {
-
-	std::vector<double> out(n, 0);
-	for (size_t i = 0; i < n; i++, leftIt++, rightIt++)
+	for (size_t i = 0; i < _treeHeight; i++)
 	{
-		out[i] = f(*leftIt, *rightIt);
+		std::vector<double> b(n, -10000.0);
+		std::vector<int> u(n, -1);
+
+		_beliefTree.push_back(b);
+		_uhatTree.push_back(u);
 	}
 
-	return out;
-}
+	_maskWithCrc = std::vector<int>(n, 0);
+	auto maskInf = _codePtr->BitsMask();
 
-std::vector<double> GetRightMessage(std::vector<double>::iterator leftIt, std::vector<double>::iterator rightIt, std::vector<int> uHat, size_t n) {
-	std::vector<double> out(n, 0);
-
-	for (size_t i = 0; i < n; i++, leftIt++, rightIt++)
-	{
-		out[i] = g(*leftIt, *rightIt, uHat[i]);
+	if (_codePtr->IsCrcUsed()) {
+		auto maskCrc = _codePtr->CrcMask();
+		for (size_t i = 0; i < n; i++)
+			_maskWithCrc[i] = maskInf[i] || maskCrc[i];
 	}
+	else
+		_maskWithCrc = maskInf;
 
-	return out;
+	_x = std::vector<int>(n, -1);
+
+	// optimization allocation
+	_binaryIter = std::vector<int>(m, 0);
 }
 
-// return u, cause they are needed at each step
-std::vector<int> DecodeRecursive(
-	std::vector<double>::iterator inLlrIt,
-	std::vector<double>::iterator outLlrIt,
-	std::vector<int>::iterator maskIt,
-	std::vector<int>::iterator xIt,
-	size_t n
-	) 
+void ScDecoder::FillLeftMessageInTree(std::vector<double>::iterator leftIt,
+	std::vector<double>::iterator rightIt,
+	std::vector<double>::iterator outIt,
+	size_t n)
 {
-	std::vector<int> uHat(n, 0);
-	if (n == 1) {
-		*outLlrIt = *inLlrIt;
-		if (*maskIt)
-			*xIt = *inLlrIt < 0;
+	for (size_t i = 0; i < n; i++, leftIt++, rightIt++, outIt++)
+	{
+		*outIt = f(*leftIt, *rightIt);
+	}
+}
 
-		else
-			*xIt = FROZEN_VALUE;
-		
-		uHat[0] = *xIt;
+void ScDecoder::FillRightMessageInTree(std::vector<double>::iterator leftIt,
+	std::vector<double>::iterator rightIt,
+	std::vector<int>::iterator uhatIt,
+	std::vector<double>::iterator outIt,
+	size_t n)
+{
+	for (size_t i = 0; i < n; i++, leftIt++, rightIt++, outIt++, uhatIt++)
+	{
+		*outIt = g(*leftIt, *rightIt, *uhatIt);
+	}
+}
+
+
+size_t ScDecoder::FirstBitPos(size_t n) {
+	size_t m = 0;
+	while (n > 0)
+	{
+		n = n >> 1;
+		m++;
+	}
+
+	return m;
+}
+
+void ScDecoder::PassDown(size_t iter) {
+	size_t m = _codePtr->m();
+	size_t n = _codePtr->N();
+
+	size_t iterXor;
+	size_t level;
+	if (iter) {
+		iterXor = iter ^ (iter - 1);
+		level = m - FirstBitPos(iterXor);
 	}
 	else {
-		size_t half_n = n / 2;
-		std::vector<double> llrLeft = GetLeftMessage(inLlrIt, inLlrIt + half_n, half_n);
-		std::vector<int> uHatLeft = DecodeRecursive(llrLeft.begin(), outLlrIt, maskIt, xIt, half_n);
-
-		std::vector<double> llrRight = GetRightMessage(inLlrIt, inLlrIt + half_n, uHatLeft, half_n);
-		std::vector<int> uHatRight = DecodeRecursive(llrRight.begin(), outLlrIt + half_n, maskIt + half_n, xIt + half_n, half_n);
-
-		for (size_t i = 0; i < half_n; i++)
-		{
-			uHat[i] = (uHatLeft[i] + uHatRight[i]) % 2;
-			uHat[i + half_n] = uHatRight[i];
-		}
-		
+		level = 0;
 	}
-	return uHat;
+
+	//std::vector<int> binaryIter(m - level, 0);
+	int size = (int)(m - level);
+	size_t iterCopy = iter;
+	for (int i = size - 1; i >= 0; i--)
+	{
+		_binaryIter[i] = iterCopy % 2;
+		iterCopy = iterCopy >> 1;
+	}
+
+	size_t length = (size_t)1 << (m - level - 1);
+	for (size_t i = level; i < m; i++)
+	{
+		size_t ones = ~0u;
+		size_t offset = iter & (ones << (m - i));
+
+		if (!_binaryIter[i - level]) {
+			FillLeftMessageInTree(_beliefTree[i].begin() + offset,
+				_beliefTree[i].begin() + offset + length,
+				_beliefTree[i + 1].begin() + offset,
+				length);
+		}
+		else {
+
+			FillRightMessageInTree(_beliefTree[i].begin() + offset,
+				_beliefTree[i].begin() + offset + length,
+				_uhatTree[i + 1].begin() + offset,
+				_beliefTree[i + 1].begin() + offset + length,
+				length);
+		}
+
+		length = length / 2;
+	}
 }
 
-std::vector<int> ScDecoder::Decode(std::vector<double> inLlr) {
+void ScDecoder::PassUp(size_t iter) {
+	size_t m = _codePtr->m();
+	size_t iterCopy = iter;
+
+	size_t bit = iterCopy % 2;
+	size_t length = 1;
+	size_t level = m;
+	size_t offset = iter;
+	while (bit != 0)
+	{
+		offset -= length;
+		for (size_t i = 0; i < length; i++)
+		{
+			_uhatTree[level - 1][offset + i] = _uhatTree[level][offset + i] ^ _uhatTree[level][offset + length + i];
+		}
+		for (size_t i = 0; i < length; i++)
+		{
+			_uhatTree[level - 1][offset + length + i] = _uhatTree[level][offset + length + i];
+		}
+
+
+		iterCopy = iterCopy >> 1;
+		bit = iterCopy % 2;
+		length *= 2;
+		level -= 1;
+	}
+}
+
+void ScDecoder::DecodeInternal(std::vector<double> inLlr) {
 	size_t n = inLlr.size();
-	std::vector<double> outLlr(n, 0);
-	std::vector<int> x(n, 0);
-	std::vector<int> mask = _codePtr->BitsMask();
+	size_t m = _codePtr->m();
 
-	std::vector<int> u = DecodeRecursive(inLlr.begin(), outLlr.begin(), mask.begin(), x.begin(), n);
-
-	size_t k = _codePtr->k();
-	std::vector<int> result(k, 0);
-	size_t j = 0;
 	for (size_t i = 0; i < n; i++)
 	{
-		if (mask[i] == 0)
-			continue;
+		_beliefTree[0][i] = inLlr[i];
+	}
+	for (size_t i = 0; i < n; i++)
+	{
+		PassDown(i);
+		if (_maskWithCrc[i]) {
+			_x[i] = L(_beliefTree[m][i]);
+		}
+		else {
+			_x[i] = FROZEN_VALUE;
+		}
+		_uhatTree[m][i] = _x[i];
+		PassUp(i);
+	}
 
-		result[j] = x[i];
-		j++;
+	return;
+}
+
+std::vector<int> ScDecoder::TakeResult() {
+	std::vector<int> result(_codePtr->k(), 0);
+	std::vector<int> codewordBits = _codePtr->UnfrozenBits();
+	for (size_t i = 0; i < codewordBits.size(); i++)
+	{
+		result[i] = _x[codewordBits[i]];
 	}
 
 	return result;
+}
+
+std::vector<int> ScDecoder::Decode(std::vector<double> inLlr) {
+	
+	DecodeInternal(inLlr);
+
+	return TakeResult();
 }

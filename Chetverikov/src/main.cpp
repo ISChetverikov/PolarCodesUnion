@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include "../include/Simulate.h"
 
 void PrintUsage() {
@@ -19,4 +20,6 @@ int main(int argc, char* argv[]) {
 	}
 		
 	Simulate(argv[1]);
+
+
 }

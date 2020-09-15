@@ -8,8 +8,8 @@
 #include <algorithm>
 
 #include "../include/PolarCode.h"
-#include "../include/ScDecoder.h"
 #include "../include/GaussianApproximation.h"
+#include "../include/ScCrcAidedDecoder.h"
 #include "../include/ScFlipProgDecoder.h"
 #include "../include/Exceptions.h"
 #include "../include/Domain.h"
@@ -17,6 +17,36 @@
 #define DBL_MAX 1.7976931348623158e+308 
 #define FROZEN_VALUE 0
 #define ROOT_POSITION -1
+
+ScFlipProgDecoder::ScFlipProgDecoder(PolarCode * codePtr,
+	int level,
+	double gammaLeft,
+	double gammaRight,
+	std::vector<double> omegaArr) : ScCrcAidedDecoder(codePtr) {
+
+	size_t n = _codePtr->N();
+
+	_gammaLeft = gammaLeft;
+	_gammaRight = gammaRight;
+	_levelMax = level;
+	_omegaArr = omegaArr;
+
+	_criticalSetTree = GetCriticalSetTree(_maskWithCrc, _levelMax);
+	_subchannelsMeansGa = std::vector<double>(n, 0);
+}
+
+void ScFlipProgDecoder::SetSigma(double sigma) {
+	BaseDecoder::SetSigma(sigma);
+
+	GaussianApproximation ga(sigma);
+	size_t n = _codePtr->N();
+	for (size_t i = 0; i < n; i++)
+	{
+		_subchannelsMeansGa[i] = ga.GetMu(i + 1, n);
+	}
+
+	return;
+}
 
 // mask: 1 - black, 0 - white
 std::vector<int> ScFlipProgDecoder::GetCriticalSet(std::vector<int> mask, int position) {
@@ -106,265 +136,6 @@ CriticalSetNode * ScFlipProgDecoder::GetCriticalSetTree(std::vector<int> mask, i
 	return root;
 }
 
-ScFlipProgDecoder::ScFlipProgDecoder(PolarCode * codePtr, int level, double gammaLeft, double gammaRight, std::vector<double> omegaArr) : BaseDecoder(codePtr) {
-	size_t m = _codePtr->m();
-	size_t n = _codePtr->N();
-	_treeHeight = m + 1;
-
-	for (size_t i = 0; i < _treeHeight; i++)
-	{
-		std::vector<double> b(n, -10000.0);
-		std::vector<int> u(n, -1);
-
-		_beliefTree.push_back(b);
-		_uhatTree.push_back(u);
-	}
-
-	_maskWithCrc = std::vector<int>(n, 0);
-	auto maskInf = _codePtr->BitsMask();
-	
-	if (_codePtr->IsCrcUsed()) {
-		auto maskCrc = _codePtr->CrcMask();
-		for (size_t i = 0; i < n; i++)
-			_maskWithCrc[i] = maskInf[i] || maskCrc[i];
-	}	
-	else
-		_maskWithCrc = maskInf;
-	
-	_gammaLeft = gammaLeft;
-	_gammaRight = gammaRight;
-	_levelMax = level;
-	_omegaArr = omegaArr;
-
-	_criticalSetTree = GetCriticalSetTree(_maskWithCrc, _levelMax);
-	_x = std::vector<int>(n, -1);
-	_crcPtr = new CRC(_codePtr->CrcPoly());
-	_subchannelsMeansGa = std::vector<double>(n, 0);
-
-	// optimization allocation
-	_binaryIter = std::vector<int>(m, 0);
-}
-
-domain ScFlipProgDecoder::GetDomain() {
-	return LLR;
-
-}
-
-void ScFlipProgDecoder::SetSigma(double sigma) {
-	BaseDecoder::SetSigma(sigma);
-
-	GaussianApproximation ga(sigma);
-	size_t n = _codePtr->N();
-	for (size_t i = 0; i < n; i++)
-	{
-		_subchannelsMeansGa[i] = ga.GetMu(i + 1, n);
-	}
-
-	return;
-}
-
-//double ScFlipProgDecoder::f(double llr1, double llr2) {
-//	double prod = tanh(llr1 / 2) * tanh(llr2 / 2);
-//	double limit = 0.9999999999999999;
-//
-//	if (prod > limit)
-//		prod = limit;
-//	if (prod < -limit)
-//		prod = -limit;
-//
-//	return 2 * atanh(prod);
-//}
-
-
-double ScFlipProgDecoder::f(double llr1, double llr2) {
-	double sign = 1.0;
-
-	if (llr1 < 0) {
-		sign *= -1;
-		llr1 *= -1;
-	}
-	if (llr2 < 0) {
-		sign *= -1;
-		llr2 *= -1;
-	}
-
-	return ((llr1 < llr2) ? llr1 : llr2) * sign;
-}
-
-double ScFlipProgDecoder::g(double llr1, double llr2, int u1) {
-	return llr2 + (1 - 2 * u1) * llr1;
-}
-
-int ScFlipProgDecoder::L(double llr) {
-	return (llr >= 0) ? 0 : 1;
-}
-
-void ScFlipProgDecoder::FillLeftMessageInTree(std::vector<double>::iterator leftIt,
-	std::vector<double>::iterator rightIt,
-	std::vector<double>::iterator outIt,
-	size_t n)
-{
-	for (size_t i = 0; i < n; i++, leftIt++, rightIt++, outIt++)
-	{
-		*outIt = f(*leftIt, *rightIt);
-	}
-}
-
-void ScFlipProgDecoder::FillRightMessageInTree(std::vector<double>::iterator leftIt,
-	std::vector<double>::iterator rightIt,
-	std::vector<int>::iterator uhatIt,
-	std::vector<double>::iterator outIt,
-	size_t n)
-{
-	for (size_t i = 0; i < n; i++, leftIt++, rightIt++, outIt++, uhatIt++)
-	{
-		*outIt = g(*leftIt, *rightIt, *uhatIt);
-	}
-}
-
-
-size_t ScFlipProgDecoder::log2(size_t n) {
-	size_t m = 0;
-	while (n > 0)
-	{
-		n = n >> 1;
-		m++;
-	}
-
-	return m;
-}
-
-void ScFlipProgDecoder::PassDown(size_t iter) {
-	size_t m = _codePtr->m();
-	size_t n = _codePtr->N();
-
-	size_t iterXor;
-	size_t level;
-	if (iter) {
-		iterXor = iter ^ (iter - 1);
-		level = m - log2(iterXor);
-	}
-	else {
-		level = 0;
-	}
-
-	//std::vector<int> binaryIter(m - level, 0);
-	int size = m - level;
-	size_t iterCopy = iter;
-	for (int i = size - 1; i >= 0; i--)
-	{
-		_binaryIter[i] = iterCopy % 2;
-		iterCopy = iterCopy >> 1;
-	}
-
-	size_t length = (size_t)1 << (m - level - 1);
-	for (size_t i = level; i < m; i++)
-	{
-		size_t ones = ~0u;
-		size_t offset = iter & (ones << (m - i));
-
-		if (!_binaryIter[i - level]) {
-			FillLeftMessageInTree(_beliefTree[i].begin() + offset,
-				_beliefTree[i].begin() + offset + length,
-				_beliefTree[i + 1].begin() + offset,
-				length);
-		}
-		else {
-
-			FillRightMessageInTree(_beliefTree[i].begin() + offset,
-				_beliefTree[i].begin() + offset + length,
-				_uhatTree[i + 1].begin() + offset,
-				_beliefTree[i + 1].begin() + offset + length,
-				length);
-		}
-
-		length = length / 2;
-	}
-}
-
-void ScFlipProgDecoder::PassUp(size_t iter) {
-	size_t m = _codePtr->m();
-	size_t iterCopy = iter;
-
-	size_t bit = iterCopy % 2;
-	size_t length = 1;
-	size_t level = m;
-	size_t offset = iter;
-	while (bit != 0)
-	{
-		offset -= length;
-		for (size_t i = 0; i < length; i++)
-		{
-			_uhatTree[level - 1][offset + i] = _uhatTree[level][offset + i] ^ _uhatTree[level][offset + length + i];
-		}
-		for (size_t i = 0; i < length; i++)
-		{
-			_uhatTree[level - 1][offset + length + i] = _uhatTree[level][offset + length + i];
-		}
-
-
-		iterCopy = iterCopy >> 1;
-		bit = iterCopy % 2;
-		length *= 2;
-		level -= 1;
-	}
-}
-
-void ScFlipProgDecoder::DecodeFromTo(int startPosition, int endPosition) {
-	size_t n = _codePtr->N();
-	size_t m = _codePtr->m();
-
-	_uhatTree[m][startPosition] = _x[startPosition];
-	PassUp(startPosition);
-	for (size_t i = startPosition + 1; i < endPosition; i++)
-	{
-		PassDown(i);
-		if (_maskWithCrc[i]) {
-			_x[i] = L(_beliefTree[m][i]);
-		}
-		else {
-			_x[i] = FROZEN_VALUE;
-		}
-		_uhatTree[m][i] = _x[i];
-		PassUp(i);
-	}
-
-	if (endPosition != n) {
-		PassDown(endPosition);
-		if (_maskWithCrc[endPosition]) {
-			_x[endPosition] = L(_beliefTree[m][endPosition]);
-		}
-		else {
-			_x[endPosition] = FROZEN_VALUE;
-		}
-	}
-		
-}
-
-bool ScFlipProgDecoder::IsCrcPassed(std::vector<int> codeword) {
-	size_t n = codeword.size();
-	size_t k = _codePtr->k();
-	size_t deg = _codePtr->CrcDeg();
-
-	auto wordBits = _codePtr->UnfrozenBits();
-	std::vector<int> word(k, 0);
-	for (size_t i = 0; i < k; i++)
-	{
-		word[i] = codeword[wordBits[i]];
-	}
-
-	auto crcBits = _codePtr->CrcUnfrozenBits();
-	std::vector<int> crc(deg, 0);
-	for (size_t i = 0; i < deg; i++)
-	{
-		crc[i] = codeword[crcBits[i]];
-	}
-
-	auto crcReal = _crcPtr->Calculate(word);
-	return crc == crcReal;
-}
-
-
 // with using means after gaussian approxiamtion procedure
 std::vector<CriticalSetNode *> ScFlipProgDecoder::SortCriticalNodes(std::vector<CriticalSetNode *> criticalNodes, std::vector<double> llrs) {
 	size_t length = criticalNodes.size();
@@ -448,23 +219,7 @@ std::vector<int> ScFlipProgDecoder::Decode(std::vector<double> inLlr) {
 	size_t n = inLlr.size();
 	size_t m = _codePtr->m();
 	
-	for (size_t i = 0; i < n; i++)
-	{
-		_beliefTree[0][i] = inLlr[i];
-	}
-
-	for (size_t i = 0; i < n; i++)
-	{
-		PassDown(i);
-		if (_maskWithCrc[i]) {
-			_x[i] = L(_beliefTree[m][i]);
-		}
-		else {
-			_x[i] = FROZEN_VALUE;
-		}
-		_uhatTree[m][i] = _x[i];
-		PassUp(i);
-	}
+	DecodeInternal(inLlr);
 
 	if (!IsCrcPassed(_x)) {
 		std::queue<CriticalSetNode *> q;
@@ -512,12 +267,5 @@ std::vector<int> ScFlipProgDecoder::Decode(std::vector<double> inLlr) {
 
 	}
 
-	std::vector<int> result(_codePtr->k(), 0);
-	std::vector<int> codewordBits = _codePtr->UnfrozenBits();
-	for (size_t i = 0; i < codewordBits.size(); i++)
-	{
-		result[i] = _x[codewordBits[i]];
-	}
-
-	return result;
+	return TakeResult();
 }

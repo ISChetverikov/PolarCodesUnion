@@ -10,9 +10,12 @@
 #include "../include/MonteCarloSimulator.h"
 #include "../include/PolarCode.h"
 #include "../include/Encoder.h"
+#include "../include/ScRecursiveDecoder.h"
 #include "../include/ScDecoder.h"
 #include "../include/ScFanoDecoder.h"
 #include "../include/ScFlipDecoder.h"
+#include "../include/ScListFlipStatDecoder.h"
+#include "../include/ScListDecoder.h"
 #include "../include/ScFlipProgDecoder.h"
 #include "../include/BaseSimulator.h"
 #include "../include/ConfigReading.h"
@@ -139,9 +142,13 @@ BaseDecoder * BuildDecoder(
                             std::unordered_map<std::string, std::string> decoderParams,
 							PolarCode * codePtr) {
     BaseDecoder * decoderPtr = NULL;
-
+	
     switch (decoderType)
     {
+	case decoderType::SCRecursive: {
+		decoderPtr = new ScRecursiveDecoder(codePtr);
+		break;
+	}
 	case decoderType::SC: {
 		decoderPtr = new ScDecoder(codePtr);
 	}
@@ -150,11 +157,19 @@ BaseDecoder * BuildDecoder(
 		double T = ExtractDouble(decoderParams, "T", "SCFano decoder");
 		double delta = ExtractDouble(decoderParams, "delta", "SCFano decoder");
 		decoderPtr = new ScFanoDecoder(codePtr, T, delta);
+		return decoderPtr;
 	}
+		break;
 	case decoderType::SCFlip: {
 		int T = ExtractInt(decoderParams, "T", "SCFlip decoder");
 		decoderPtr = new ScFlipDecoder(codePtr, T);
+		break;
 	}
+	case decoderType::SCList: {
+		int L = ExtractInt(decoderParams, "L", "SCList decoder");
+		decoderPtr = new ScListDecoder(codePtr, L);
+	}
+	break;
 	case decoderType::SCFlipProg: {
 		int level = ExtractInt(decoderParams, "level", "SCFlipProg decoder");
 		int gammaLeft = ExtractInt(decoderParams, "gammaLeft", "SCFlipProg decoder");
@@ -165,6 +180,11 @@ BaseDecoder * BuildDecoder(
 		decoderPtr = new ScFlipProgDecoder(codePtr, level, gammaLeft, gammaRight, omegaArr);
 	}
 		break;
+	case decoderType::SCListFlipStat: {
+		int L = ExtractInt(decoderParams, "L", "SCList decoder");
+		decoderPtr = new ScListFlipStatDecoder(codePtr, L);
+	}
+	break;
     default:
         break;
     }
@@ -187,6 +207,7 @@ BaseSimulator * BuildSimulator(
 		bool isSigmaDependOnR = (bool)ExtractInt(simulationTypeParams, "isSigmaDependOnR", "MC Simulator");
         int maxTestsCount = ExtractInt(simulationTypeParams, "maxTestsCount", "MC simulator");
         int maxRejectionsCount = ExtractInt(simulationTypeParams, "maxRejectionsCount", "MC simulator");
+		std::string additionalInfoFilename = ExtractString(simulationTypeParams, "additionalInfoFilename", "MC simulator", false);
             
         simulator = new MonteCarloSimulator(maxTestsCount, maxRejectionsCount, codePtr, encoderPtr, decoderPtr, isSigmaDependOnR);
     }
@@ -197,10 +218,13 @@ BaseSimulator * BuildSimulator(
     return simulator;
 }
 
-void LogIntoFile(std::string filename, std::string message, std::string stringPrefix="") {
+void LogIntoFile(std::string filename, std::string message, bool isRewrite=false, std::string stringPrefix="") {
 	
 	std::ofstream resultsFileStream;
-	resultsFileStream.open(filename, std::fstream::out | std::fstream::app);
+	if (isRewrite)
+		resultsFileStream.open(filename, std::fstream::out | std::fstream::trunc);
+	else
+		resultsFileStream.open(filename, std::fstream::out | std::fstream::app);
 
 	if (!resultsFileStream.is_open()) {
 		throw FileIsNotOpennedException("Cannot open file \"" + filename + "\".");
@@ -219,9 +243,9 @@ void LogIntoFile(std::string filename, std::string message, std::string stringPr
 	resultsFileStream.close();
 }
 
-bool TryLogIntoFile(std::string filename, std::string message, std::string stringPrefix = "") {
+bool TryLogIntoFile(std::string filename, std::string message, bool isRewrite=false, std::string stringPrefix = "") {
 	try {
-		LogIntoFile(filename, message, stringPrefix = "");
+		LogIntoFile(filename, message, isRewrite, stringPrefix = "");
 		return true;
 	}
 	catch (const std::exception&) {
@@ -282,13 +306,19 @@ void Simulate(std::string configFilename) {
 			LogIntoFile(simulationParams.resultsFilename, simulationParams.ToString(), "# ");
 			LogIntoConsole(simulationParams.ToString());
 
-
 			for (size_t i = 0; i < simulationParams.snrArray.size(); i++)
 			{
 				LogIntoConsole("Iteration has been started. SNR: " + std::to_string(simulationParams.snrArray[i]) + "\n");
 
 				auto result = simulatorPtr->Run(simulationParams.snrArray[i]);
 				auto message = result.ToString() + "\n";
+
+#ifdef DECODER_STAT
+				auto decoderStat = decoderPtr->GetStatistic();
+				bool isFileRewriting = true;
+				LogIntoFile(simulationParams.additionalFilename, decoderStat, isFileRewriting);
+				decoderPtr->ClearStatistic();
+#endif // DECODER_STAT
 
 				LogIntoFile(simulationParams.resultsFilename, message);
 				LogIntoConsole("Iteration has been ended with result:\n\t" + message);

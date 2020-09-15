@@ -11,6 +11,7 @@
 #define ROOT_SECTION "Config"
 #define		SIMULATION_SECTION "Simulation"
 #define			RESULT_FILE_RECORD "ResultFile"
+#define			ADDITIONAL_FILE_RECORD "AdditionalFile"
 #define			SIMULATOR_SECTION "Simulator"
 #define			CODE_SECTION "Code"
 #define			DECODER_SECTION "Decoder"
@@ -63,6 +64,7 @@ SimulationParams ReadSimulationSection(pugi::xml_node simulation_node) {
 	SimulationParams params;
 
 	params.resultsFilename = GetChildNode(simulation_node, RESULT_FILE_RECORD).child_value();
+	params.additionalFilename = GetChildNode(simulation_node, ADDITIONAL_FILE_RECORD).child_value();
 
 	pugi::xml_node simulator_node = GetChildNode(simulation_node, SIMULATOR_SECTION);
 
