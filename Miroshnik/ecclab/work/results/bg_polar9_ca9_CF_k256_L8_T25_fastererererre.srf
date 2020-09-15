@@ -1,0 +1,12 @@
+code_n 256
+code_k 128
+
+SNR { 1 }
+tr_num { 2 }
+en_bit { 0 }
+en_bl { 0 }
+ml_tr_num { 2 }
+enml_bl { 0 }
+
+% SNR   ep_bit      ep_bl       epml_bl
+% 1.00  0.000e+00  0.000e+00  0.000e+00
