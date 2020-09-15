@@ -21,6 +21,7 @@ struct SimulationParams {
 	std::unordered_map < std::string, std::string > codeParams;
 
 	std::string resultsFilename;
+	std::string additionalFilename;
 	std::vector<double> snrArray;
 
 	std::string ToString() {
@@ -28,6 +29,10 @@ struct SimulationParams {
 
 		ss << std::string(60, '#') << "\n";
 		ss << "Prameters of simulation run\n\n";
+
+		ss << "ResultsFilename: " + resultsFilename + "\n\n";
+		ss << "AdditionalFilename: " + additionalFilename + "\n\n";
+		
 		ss << "Simulation type: " + simulationTypeToString(simulator) + "\n";
 		ss << "Simulation parameters:\n";
 		for (auto simulationParam : simulatorParams)

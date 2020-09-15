@@ -7,9 +7,14 @@
 
 Encoder::Encoder(PolarCode * codePtr) {
 	_codePtr = codePtr;
+	_crcPtr = new CRC(_codePtr->CrcPoly());
 }
 
-void PolarTransform(std::vector<int>::iterator begin, size_t n) {
+Encoder::~Encoder() {
+	delete _crcPtr;
+}
+
+void PolarTransformRecursive(std::vector<int>::iterator begin, size_t n) {
 	
 	if (n == 1)
 		return;
@@ -18,10 +23,15 @@ void PolarTransform(std::vector<int>::iterator begin, size_t n) {
 	for (auto it = begin; it < begin + half_n; it++)
 		*it = (*it + *(it + half_n)) % 2;
 	
-	PolarTransform(begin, half_n);
-	PolarTransform(begin + half_n, half_n);
+	PolarTransformRecursive(begin, half_n);
+	PolarTransformRecursive(begin + half_n, half_n);
 
 	return;
+}
+
+std::vector<int> Encoder::PolarTransform(std::vector<int> x) {
+	PolarTransformRecursive(x.begin(), x.size());
+	return x;
 }
 
 std::vector<int> Encoder::Encode(std::vector<int> word) {
@@ -32,18 +42,23 @@ std::vector<int> Encoder::Encode(std::vector<int> word) {
 
 	size_t n = _codePtr->N();
 	std::vector<int> codeword(n, 0);
-	std::vector<int> mask = _codePtr->BitsMask();
+	std::vector<int> codewordBits = _codePtr->UnfrozenBits();
 
-	size_t j = 0;
-	for (size_t i = 0; i < n; i++)
-	{
-		if (mask[i] == 0)
-			continue;
-
-		codeword[i] = word[j];
-		j++;
+	for (size_t i = 0; i < codewordBits.size(); i++)
+	{ 
+		codeword[codewordBits[i]] = word[i];
 	}
 
-	PolarTransform(codeword.begin(), n);
+	if (_codePtr->IsCrcUsed()) {
+		std::vector<int> crc = _crcPtr->Calculate(word);
+		std::vector<int> crcBits = _codePtr->CrcUnfrozenBits();
+
+		for (size_t i = 0; i < crcBits.size(); i++)
+		{
+			codeword[crcBits[i]] = crc[i];
+		}
+	}
+
+	PolarTransformRecursive(codeword.begin(), n);
 	return codeword;
 }

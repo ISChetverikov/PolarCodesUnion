@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include "../include/Simulate.h"
 
 void PrintUsage() {
@@ -11,7 +12,7 @@ void PrintUsage() {
 #endif
 }
 
-int main1(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
 
 	if (argc != 2) {
 		PrintUsage();
@@ -19,4 +20,6 @@ int main1(int argc, char* argv[]) {
 	}
 		
 	Simulate(argv[1]);
+
+
 }

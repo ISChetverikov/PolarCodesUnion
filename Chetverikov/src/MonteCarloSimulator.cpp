@@ -1,13 +1,16 @@
 #include <random>
 #include <chrono>
+#include <exception>
 #include "../include/SimulationParameters.h"
 #include "../include/MonteCarloSimulator.h"
+#include "../include/ScListDecoder.h"
 
 MonteCarloSimulator::MonteCarloSimulator(int maxTestsCount,
 	int maxRejectionsCount,
 	PolarCode * codePtr,
 	Encoder * encoderPtr,
-	BaseDecoder * decoderPtr) : BaseSimulator(codePtr, encoderPtr, decoderPtr) 
+	BaseDecoder * decoderPtr,
+	bool isSigmaDependOnR) : BaseSimulator(codePtr, encoderPtr, decoderPtr, isSigmaDependOnR)
 {
 	_maxTestsCount = maxTestsCount;
 	_maxRejectionsCount = maxRejectionsCount;
@@ -57,8 +60,10 @@ SimulationIterationResults MonteCarloSimulator::Run(double snr)
 		tests++;
 
 		std::generate(word.begin(), word.end(), [&]() { return uniform_discrete_dist(randomDevice); });
-	
+
 		codeword = _encoderPtr->Encode(word);
+		// Give answer to a decoder for debugging or statistic retreving
+		_decoderPtr->SetCodeword(_encoderPtr->PolarTransform(codeword));
 
 		for (size_t i = 0; i < n; i++) {
 			beliefs[i] = ModulateBpsk(codeword[i]) + normal_dist(randomDevice);
@@ -72,7 +77,47 @@ SimulationIterationResults MonteCarloSimulator::Run(double snr)
 				beliefs[i] = LlrToP1(beliefs[i]);
 			}
 		}
+
 		decoded = _decoderPtr->Decode(beliefs);
+
+		// LIST4 parallel decoder
+		/*auto d = new ScListDecoder(_codePtr, 4);
+		auto de = d->Decode(beliefs);
+
+		if (false && de != decoded && de == word) {
+			std::cout << "Belief:\n{";
+			for (size_t i = 0; i < beliefs.size(); i++)
+			{
+				std::cout << beliefs[i] << ", ";
+			}
+			std::cout << "}" << std::endl;
+
+			std::cout << "Codeword:\n{";
+			for (size_t i = 0; i < codeword.size(); i++)
+			{
+				std::cout << codeword[i] << ", ";
+			}
+			std::cout << "}" << std::endl;
+
+			std::vector<int> extWord = _encoderPtr->PolarTransform(codeword);
+
+			std::cout << "ExtWord:\n{";
+			for (size_t i = 0; i < extWord.size(); i++)
+			{
+				std::cout << extWord[i] << ", ";
+			}
+			std::cout << "}" << std::endl;
+
+			std::cout << "Word:\n{";
+			for (size_t i = 0; i < word.size(); i++)
+			{
+				std::cout << word[i] << ", ";
+			}
+			std::cout << "}\n";
+
+			throw "Exit debug!";
+		}*/
+
 		if (decoded != word)
 			wrong_dec += 1;
 	}

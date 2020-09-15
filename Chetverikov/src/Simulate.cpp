@@ -10,9 +10,13 @@
 #include "../include/MonteCarloSimulator.h"
 #include "../include/PolarCode.h"
 #include "../include/Encoder.h"
+#include "../include/ScRecursiveDecoder.h"
 #include "../include/ScDecoder.h"
 #include "../include/ScFanoDecoder.h"
 #include "../include/ScFlipDecoder.h"
+#include "../include/ScListFlipStatDecoder.h"
+#include "../include/ScListDecoder.h"
+#include "../include/ScFlipProgDecoder.h"
 #include "../include/BaseSimulator.h"
 #include "../include/ConfigReading.h"
 #include "../include/Exceptions.h"
@@ -84,14 +88,13 @@ std::vector<int> ReadSequenceFromFile(std::string path) {
 	return seq;
 }
 
-std::vector<int> StrToVector(std::string crcPolyStr) {
+std::vector<int> PolyStrToVector(std::string crcPolyStr) {
 	if (crcPolyStr.empty())
 		return std::vector<int>();
 
 	size_t deg = crcPolyStr.size();
 
-	std::vector<int> result(deg + 1, 0);
-	result[deg] = 1;
+	std::vector<int> result(deg, 0);
 
 	for (size_t i = 0; i < deg; i++)
 	{
@@ -105,13 +108,28 @@ std::vector<int> StrToVector(std::string crcPolyStr) {
 	return result;
 }
 
+std::vector<double> OmegaArrStrToVector(std::string str)
+{
+	if (str.empty())
+		return std::vector<double>();
+
+	std::vector<double> result;
+	std::string token;
+	std::istringstream tokenStream(str);
+	while (std::getline(tokenStream, token, ','))
+	{
+		result.push_back(std::stod(token));
+	}
+	return result;
+}
+
 PolarCode * BuildCode(std::unordered_map<std::string, std::string> codeParams) {
 	PolarCode * codePtr;
 
 	int m = ExtractInt(codeParams, "m", "PolarCode");
 	int k = ExtractInt(codeParams, "k", "PolarCode");
 	std::string crcPolyString = ExtractString(codeParams, "CRC", "PolarCode", false);
-	std::vector<int> crcPoly = StrToVector(crcPolyString);
+	std::vector<int> crcPoly = PolyStrToVector(crcPolyString);
 	std::string sequenceFilePath = ExtractString(codeParams, "sequenceFile", "PolarCode", true);
 	std::vector<int> reliabilitySequence = ReadSequenceFromFile(sequenceFilePath);
 
@@ -124,9 +142,13 @@ BaseDecoder * BuildDecoder(
                             std::unordered_map<std::string, std::string> decoderParams,
 							PolarCode * codePtr) {
     BaseDecoder * decoderPtr = NULL;
-    
+	
     switch (decoderType)
     {
+	case decoderType::SCRecursive: {
+		decoderPtr = new ScRecursiveDecoder(codePtr);
+		break;
+	}
 	case decoderType::SC: {
 		decoderPtr = new ScDecoder(codePtr);
 	}
@@ -135,12 +157,34 @@ BaseDecoder * BuildDecoder(
 		double T = ExtractDouble(decoderParams, "T", "SCFano decoder");
 		double delta = ExtractDouble(decoderParams, "delta", "SCFano decoder");
 		decoderPtr = new ScFanoDecoder(codePtr, T, delta);
-	}
-	case decoderType::SCFlip: {
-		int T = ExtractInt(decoderParams, "T", "SCFano decoder");
-		decoderPtr = new ScFlipDecoder(codePtr, T);
+		return decoderPtr;
 	}
 		break;
+	case decoderType::SCFlip: {
+		int T = ExtractInt(decoderParams, "T", "SCFlip decoder");
+		decoderPtr = new ScFlipDecoder(codePtr, T);
+		break;
+	}
+	case decoderType::SCList: {
+		int L = ExtractInt(decoderParams, "L", "SCList decoder");
+		decoderPtr = new ScListDecoder(codePtr, L);
+	}
+	break;
+	case decoderType::SCFlipProg: {
+		int level = ExtractInt(decoderParams, "level", "SCFlipProg decoder");
+		int gammaLeft = ExtractInt(decoderParams, "gammaLeft", "SCFlipProg decoder");
+		int gammaRight = ExtractInt(decoderParams, "gammaRight", "SCFlipProg decoder");
+		std::string omegaArrString = ExtractString(decoderParams, "omegaArr", "SCFlipProg decoder", true);
+		std::vector<double> omegaArr = OmegaArrStrToVector(omegaArrString);
+
+		decoderPtr = new ScFlipProgDecoder(codePtr, level, gammaLeft, gammaRight, omegaArr);
+	}
+		break;
+	case decoderType::SCListFlipStat: {
+		int L = ExtractInt(decoderParams, "L", "SCList decoder");
+		decoderPtr = new ScListFlipStatDecoder(codePtr, L);
+	}
+	break;
     default:
         break;
     }
@@ -160,10 +204,12 @@ BaseSimulator * BuildSimulator(
     switch (simulationType)
     {
     case simulatorType::MC: {
+		bool isSigmaDependOnR = (bool)ExtractInt(simulationTypeParams, "isSigmaDependOnR", "MC Simulator");
         int maxTestsCount = ExtractInt(simulationTypeParams, "maxTestsCount", "MC simulator");
         int maxRejectionsCount = ExtractInt(simulationTypeParams, "maxRejectionsCount", "MC simulator");
+		std::string additionalInfoFilename = ExtractString(simulationTypeParams, "additionalInfoFilename", "MC simulator", false);
             
-        simulator = new MonteCarloSimulator(maxTestsCount, maxRejectionsCount, codePtr, encoderPtr, decoderPtr);
+        simulator = new MonteCarloSimulator(maxTestsCount, maxRejectionsCount, codePtr, encoderPtr, decoderPtr, isSigmaDependOnR);
     }
         break;
     default:
@@ -172,10 +218,13 @@ BaseSimulator * BuildSimulator(
     return simulator;
 }
 
-void LogIntoFile(std::string filename, std::string message, std::string stringPrefix="") {
+void LogIntoFile(std::string filename, std::string message, bool isRewrite=false, std::string stringPrefix="") {
 	
 	std::ofstream resultsFileStream;
-	resultsFileStream.open(filename, std::fstream::out | std::fstream::app);
+	if (isRewrite)
+		resultsFileStream.open(filename, std::fstream::out | std::fstream::trunc);
+	else
+		resultsFileStream.open(filename, std::fstream::out | std::fstream::app);
 
 	if (!resultsFileStream.is_open()) {
 		throw FileIsNotOpennedException("Cannot open file \"" + filename + "\".");
@@ -194,9 +243,9 @@ void LogIntoFile(std::string filename, std::string message, std::string stringPr
 	resultsFileStream.close();
 }
 
-bool TryLogIntoFile(std::string filename, std::string message, std::string stringPrefix = "") {
+bool TryLogIntoFile(std::string filename, std::string message, bool isRewrite=false, std::string stringPrefix = "") {
 	try {
-		LogIntoFile(filename, message, stringPrefix = "");
+		LogIntoFile(filename, message, isRewrite, stringPrefix = "");
 		return true;
 	}
 	catch (const std::exception&) {
@@ -257,13 +306,19 @@ void Simulate(std::string configFilename) {
 			LogIntoFile(simulationParams.resultsFilename, simulationParams.ToString(), "# ");
 			LogIntoConsole(simulationParams.ToString());
 
-
 			for (size_t i = 0; i < simulationParams.snrArray.size(); i++)
 			{
 				LogIntoConsole("Iteration has been started. SNR: " + std::to_string(simulationParams.snrArray[i]) + "\n");
 
 				auto result = simulatorPtr->Run(simulationParams.snrArray[i]);
 				auto message = result.ToString() + "\n";
+
+#ifdef DECODER_STAT
+				auto decoderStat = decoderPtr->GetStatistic();
+				bool isFileRewriting = true;
+				LogIntoFile(simulationParams.additionalFilename, decoderStat, isFileRewriting);
+				decoderPtr->ClearStatistic();
+#endif // DECODER_STAT
 
 				LogIntoFile(simulationParams.resultsFilename, message);
 				LogIntoConsole("Iteration has been ended with result:\n\t" + message);
@@ -279,5 +334,6 @@ void Simulate(std::string configFilename) {
 
 	delete simulatorPtr;
 	delete decoderPtr;
+	delete encoderPtr;
 	delete codePtr;
 }

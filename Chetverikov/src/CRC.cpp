@@ -3,8 +3,8 @@
 
 CRC::CRC(std::vector<int> poly) {
 	_poly = poly;
-	_deg = poly.size() - 1;
-
+	_deg = poly.size();
+	_poly.push_back(1); // add main degree
 	_paddingSymbol = 0;
 	_init = std::vector<int>(_deg, 0);
 	// here exception if poly is empty
@@ -57,12 +57,4 @@ std::vector<int> CRC::Calculate(std::vector<int> bits) {
 	}
 	
 	return crc;
-}
-
-std::vector<int> CRC::Add(std::vector<int> bits) {
-	return std::vector<int>();
-}
-
-bool CRC::Check(std::vector<int> bits) {
-	return true;
 }

@@ -15,6 +15,4 @@ public:
 	CRC(std::vector<int> poly);
 	std::vector<int> Calculate(std::vector<int> bits);
 
-	std::vector<int> Add(std::vector<int> bits);
-	bool Check(std::vector<int> bits);
 };

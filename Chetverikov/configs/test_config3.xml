@@ -1,0 +1,32 @@
+<Config>
+    <Simulation>
+      <ResultFile>C:\Users\ische\source\repos\PolarCodes\results\SCFLIPPROG_488_level4_p3.results</ResultFile>
+      <Simulator type="MC">
+        <Param name="maxTestsCount">50000</Param>
+        <Param name="maxRejectionsCount">20</Param>
+        <Param name="isSigmaDependOnR">0</Param>
+      </Simulator>
+      <SnrRange start="-1.2188" stop="-1.1" step="0.25"></SnrRange>
+      <SnrArray>
+      </SnrArray>
+      <Code type="Polar">
+        <Param name="m">10</Param>
+        <Param name="k">488</Param>
+        <Param name="sequenceFile">C:\Users\ische\source\repos\PolarCodes\polar_sequences\1024.txt</Param>
+        <Param name="CRC">100000000000000001100011</Param>
+
+        <Param name="CRC1">111</Param>
+        
+      </Code>
+      <Decoder type="SCFlipProg">
+        
+        <Param name="gammaLeft">3.6</Param>
+        <Param name="gammaRight">2</Param>
+        <Param name="level">4</Param>
+        <Param name="omegaArr">1.1,1.1,0.5,0.25,1.1</Param>
+
+        <Param name="T">5</Param>
+        <Param name="delta">1.0</Param>
+      </Decoder>
+    </Simulation>
+</Config>

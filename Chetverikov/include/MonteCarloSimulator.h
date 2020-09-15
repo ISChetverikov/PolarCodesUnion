@@ -13,7 +13,7 @@ protected:
 	
 
 public:
-	MonteCarloSimulator(int maxTests, int rejectionsCount, PolarCode * codePtr, Encoder * encoderPtr, BaseDecoder * decoderPtr);
+	MonteCarloSimulator(int maxTests, int rejectionsCount, PolarCode * codePtr, Encoder * encoderPtr, BaseDecoder * decoderPtr, bool isSigmaDependOnR);
 	~MonteCarloSimulator() {};
 	SimulationIterationResults Run(double snr) override;
 };
