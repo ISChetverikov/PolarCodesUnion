@@ -1,0 +1,33 @@
+include codes/polar/polar7_ca24_CF_k64.txt
+
+% Results file.
+res_file results/bg_polar7_ca24_CF_k64_T10_L8_SCLF.srf
+
+% SNR values to simulate at.
+SNR_val_trn {
+   0      10000
+   0.5    10000
+   1      10000
+   1.5    70000
+   2      140000
+   2.5    400000
+   3      800000
+   3.5    1000000
+   4      2000000
+%   4.5    1600000
+%   5      4000000
+%   5.5    8000000
+%   6      6000000
+%   6.5    8000000
+%   7      1200000
+}
+
+random_codeword on
+
+ml_lb on
+
+list_size 8
+
+flips 10
+
+alpha 0.375
