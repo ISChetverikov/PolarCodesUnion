@@ -3,40 +3,71 @@
 
 #include "../include/ScCrcAidedDecoder.h"
 #include "../include/ScListFlipStatDecoder.h"
+#include "../include/FlipStatistic1024_512_CRC24.h"
 
 #define FROZEN_VALUE 0
 
 ScListFlipStatDecoder::ScListFlipStatDecoder(PolarCode * codePtr, int L) : ScListDecoder(codePtr, L) {
-	_unfrozenPolarSeqWithCrc = _codePtr->UnfrozenPolarSequenceWithCrc();
+	//_unfrozenPolarSeqWithCrc = _codePtr->UnfrozenPolarSequenceWithCrc();
+	int singleNumber = -1; // TODO
+	int doubleNumber = -1;
+	bool isUsedStat = false;
+	bool isDoubleFromSingles = false;
+
+	if (isUsedStat) {
+		_singleFlips = FlipStatistic::GetSingles();
+
+		if (isDoubleFromSingles) {
+			_doubleFlips = std::vector<std::tuple<int, int>>();
+
+			for (size_t i = 0; i < _singleFlips.size(); i++)
+			{
+				for (size_t j = i + 1; j < _singleFlips.size(); j++)
+				{
+					_doubleFlips.push_back(std::make_tuple(_singleFlips[i], _singleFlips[j]));
+				}
+			}
+		}
+		else
+			_doubleFlips = FlipStatistic::GetPairs();
+	}
+	else {
+		std::vector<int> unfrozenBitsWithCrc = codePtr->UnfrozenPolarSequenceWithCrc();
+
+		_singleFlips = unfrozenBitsWithCrc;
+		_doubleFlips = std::vector<std::tuple<int, int>>();
+		for (size_t i = 0; i < unfrozenBitsWithCrc.size(); i++)
+		{
+			for (size_t j = i + 1; j < unfrozenBitsWithCrc.size(); j++)
+			{
+				_doubleFlips.push_back(std::make_tuple(unfrozenBitsWithCrc[i], unfrozenBitsWithCrc[j]));
+			}
+		}
+	}
+
 	ClearStatistic();
 }
 
 void ScListFlipStatDecoder::ClearStatistic() {
-	size_t kExt = _codePtr->kExt();
-	_singleFlipStatistic = std::vector<int>(kExt, 0);
-	_doubleFlipStatistic = std::vector<std::vector<int>>(kExt, _singleFlipStatistic);
+	_singleFlipStatistic = std::vector<int>(_singleFlips.size(), 0);
+	_doubleFlipStatistic = std::vector<int>(_doubleFlips.size(), 0);
 }
 
 std::string ScListFlipStatDecoder::GetStatistic() {
 	std::stringstream ss;
 	// std::sort(_singleFlipStatistic.rbegin(), _singleFlipStatistic.rend());
 	ss << "Single Flip:\n";
-	for (size_t i = 0; i < _codePtr->kExt(); i++)
+	for (size_t i = 0; i < _singleFlips.size(); i++)
 	{
-		// if (_singleFlipStatistic[i])
-			ss << "(" << _unfrozenPolarSeqWithCrc[i] << "): " << _singleFlipStatistic[i] << "\n";
+		//if (_singleFlipStatistic[i])
+			ss << "(" << _singleFlips[i] << "): " << _singleFlipStatistic[i] << "\n";
 	}
 
 	ss << "Double Flip:\n";
-	for (size_t i = 0; i < _codePtr->kExt(); i++)
+	for (size_t i = 0; i < _doubleFlips.size(); i++)
 	{
-		for (size_t j = 0; j < _codePtr->kExt(); j++)
-		{
-			std::sort(_doubleFlipStatistic[i].rbegin(), _doubleFlipStatistic[i].rend());
-			// if (_doubleFlipStatistic[i][j])
-				ss << "(" << _unfrozenPolarSeqWithCrc[i] << ", " << _unfrozenPolarSeqWithCrc[j] << "): " << _doubleFlipStatistic[i][j] << "\n";
-			
-		}
+		if (_doubleFlipStatistic[i])
+			ss << "(" << std::get<0>(_doubleFlips[i]) << ", " << std::get<1>(_doubleFlips[i]) << "): " << _doubleFlipStatistic[i] << "\n";
 	}
 
 	return ss.str();
@@ -154,7 +185,7 @@ void ScListFlipStatDecoder::DecodeFlipListInternal(std::vector<double> inLlr, st
 	return;
 }
 
-std::vector<int> ScListFlipStatDecoder::TakeListStatResult(bool & isError) {
+std::vector<int> ScListFlipStatDecoder::TakeListStatResult(std::vector<int> & actualCodeword) {
 	std::vector<int> result(_codePtr->k(), 0);
 	std::vector<int> candidate(_codePtr->N(), 0);
 	std::vector<int> codewordBits = _codePtr->UnfrozenBits();
@@ -175,7 +206,8 @@ std::vector<int> ScListFlipStatDecoder::TakeListStatResult(bool & isError) {
 	if (j < _L) {
 		candidate = _candidates[maxInd];	
 	}
-	isError = (candidate != _codeword);
+
+	actualCodeword = candidate;
 
 	for (size_t i = 0; i < codewordBits.size(); i++)
 	{
@@ -187,89 +219,47 @@ std::vector<int> ScListFlipStatDecoder::TakeListStatResult(bool & isError) {
 
 std::vector<int>  ScListFlipStatDecoder::Decode(std::vector<double> beliefs) {
 	DecodeListInternal(beliefs);
+	std::vector<int> actualCodeword(beliefs.size(), 0);
 
 	bool isError = false;
-	std::vector<int> result = TakeListStatResult(isError);
+	std::vector<int> result = TakeListStatResult(actualCodeword);
+	isError = actualCodeword != _codeword;
 
 	if (!isError)
 		return result;
 
-	size_t kExt = _codePtr->kExt();
-	for (size_t i = 0; i < kExt; i++)
-	{
-		int bitPosition = _unfrozenPolarSeqWithCrc[i];
+	std::vector<int> flipPositions;
 
-		std::vector<int> flipPositions;
-		flipPositions.push_back(bitPosition);
+	for (size_t i = 0; i < _singleFlips.size(); i++)
+	{
+		flipPositions.clear();
+		flipPositions.push_back(_singleFlips[i]);
 
 		DecodeFlipListInternal(beliefs, flipPositions);
-		result = TakeListStatResult(isError);
+		result = TakeListStatResult(actualCodeword);
+		isError = actualCodeword != _codeword;
 
 		if (!isError) {
 			_singleFlipStatistic[i]++;
 			return result;
 		}
 	}
-	
-	for (size_t i = 0; i < kExt; i++)
+		
+	for (size_t i = 0; i < _doubleFlips.size(); i++)
 	{
-		for (size_t j = i + 1; j < kExt; j++)
-		{
-			int bitPosition1 = _unfrozenPolarSeqWithCrc[i];
-			int bitPosition2 = _unfrozenPolarSeqWithCrc[j];
+		flipPositions.clear();
+		flipPositions.push_back(std::get<0>(_doubleFlips[i]));
+		flipPositions.push_back(std::get<1>(_doubleFlips[i]));
 
-			std::vector<int> flipPositions;
-			flipPositions.push_back(bitPosition1);
-			flipPositions.push_back(bitPosition2);
+		DecodeFlipListInternal(beliefs, flipPositions);
+		result = TakeListStatResult(actualCodeword);
+		isError = actualCodeword != _codeword;
 
-			DecodeFlipListInternal(beliefs, flipPositions);
-			result = TakeListStatResult(isError);
-
-			if (!isError) {
-				_doubleFlipStatistic[i][j]++;
-				return result;
-			}
+		if (!isError) {
+			_doubleFlipStatistic[i]++;
+			return result;
 		}
 	}
 
 	return result;
-
-	/*size_t k = _codePtr->k();
-	for (size_t i = 0; i < k; i++)
-	{
-		int bitPosition = _unfrozenBits[i];
-
-		if (_x[bitPosition] == originalCodeword[bitPosition])
-			continue;
-
-		_x[bitPosition] = !_x[bitPosition];
-
-		DecodeFrom(bitPosition);
-
-		if (_x == _codeword) {
-			_singleFlipStatistic[i]++;
-			return TakeResult();
-		}
-
-		for (size_t j = i + 1; j < k; j++)
-		{
-			int bitPosition2 = _unfrozenBits[j];
-			if (_x[bitPosition2] == originalCodeword[bitPosition2])
-				continue;
-
-			_x[bitPosition2] =! _x[bitPosition2];
-			DecodeFrom(bitPosition2);
-
-			if (_x == _codeword) {
-				_doubleFlipStatistic[i][j]++;
-				return TakeResult();
-			}
-
-			_x[bitPosition2] = !_x[bitPosition2];
-			DecodeFrom(bitPosition2);
-		}
-
-		_x[bitPosition] = !_x[bitPosition];
-		DecodeFrom(bitPosition);
-	}*/
 }

@@ -15,6 +15,7 @@
 #include "../include/ScFanoDecoder.h"
 #include "../include/ScFlipDecoder.h"
 #include "../include/ScListFlipStatDecoder.h"
+#include "../include/ScListFlipOracleStatDecoder.h"
 #include "../include/ScListDecoder.h"
 #include "../include/ScFlipProgDecoder.h"
 #include "../include/BaseSimulator.h"
@@ -181,8 +182,13 @@ BaseDecoder * BuildDecoder(
 	}
 		break;
 	case decoderType::SCListFlipStat: {
-		int L = ExtractInt(decoderParams, "L", "SCList decoder");
+		int L = ExtractInt(decoderParams, "L", "SCListFlipStat decoder");
 		decoderPtr = new ScListFlipStatDecoder(codePtr, L);
+	}
+		break;
+	case decoderType::SCListFlipOracleStat: {
+		int L = ExtractInt(decoderParams, "L", "SCListFlipOracleStat decoder");
+		decoderPtr = new ScListFlipOracleStatDecoder(codePtr, L);
 	}
 	break;
     default:
@@ -299,11 +305,12 @@ void Simulate(std::string configFilename) {
 			simulatorPtr = BuildSimulator(simulationParams.simulator, simulationParams.simulatorParams, codePtr, encoderPtr, decoderPtr);
 			LogIntoConsole("\tSimulator has been built succesfully.\n");
 
-			if(!IsFileExists(simulationParams.resultsFilename))
-				LogIntoFile(simulationParams.resultsFilename, SimulationIterationResults::GetHeader() + "\n");
+			bool isResultFileRewrited = false;
+			if(!IsFileExists(simulationParams.resultsFilename) || isResultFileRewrited)
+				LogIntoFile(simulationParams.resultsFilename, SimulationIterationResults::GetHeader() + "\n", false);
 
 			LogIntoConsole("Simulation has been started.\n\n");
-			LogIntoFile(simulationParams.resultsFilename, simulationParams.ToString(), "# ");
+			LogIntoFile(simulationParams.resultsFilename, simulationParams.ToString(), false, "# ");
 			LogIntoConsole(simulationParams.ToString());
 
 			for (size_t i = 0; i < simulationParams.snrArray.size(); i++)
@@ -315,19 +322,20 @@ void Simulate(std::string configFilename) {
 
 #ifdef DECODER_STAT
 				auto decoderStat = decoderPtr->GetStatistic();
-				bool isFileRewriting = true;
+				LogIntoFile(simulationParams.additionalFilename, "Statistic for SNR: " + std::to_string(simulationParams.snrArray[i]), false);
+				bool isFileRewriting = false;
 				LogIntoFile(simulationParams.additionalFilename, decoderStat, isFileRewriting);
 				decoderPtr->ClearStatistic();
 #endif // DECODER_STAT
 
-				LogIntoFile(simulationParams.resultsFilename, message);
+				LogIntoFile(simulationParams.resultsFilename, message, false);
 				LogIntoConsole("Iteration has been ended with result:\n\t" + message);
 			}
 		}
 		catch (const std::exception& err) {
 			std::string message = "Error was ocurred:\n" + std::string(err.what()) + "\n";
 			LogIntoConsole(message);
-			if (!TryLogIntoFile(simulationParams.resultsFilename, message))
+			if (!TryLogIntoFile(simulationParams.resultsFilename, message, false))
 				LogIntoConsole("Cannot write message of error into file \"" + simulationParams.resultsFilename + "\".\n");
 		}
     }

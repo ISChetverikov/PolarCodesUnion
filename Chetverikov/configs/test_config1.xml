@@ -1,32 +1,43 @@
 <Config>
-    <Simulation>
-      <ResultFile>C:\Users\ische\source\repos\PolarCodes\results\SCFLIPPROG_488_level4_p1.results</ResultFile>
-      <Simulator type="MC">
-        <Param name="maxTestsCount">50000</Param>
-        <Param name="maxRejectionsCount">20</Param>
-        <Param name="isSigmaDependOnR">0</Param>
-      </Simulator>
-      <SnrRange start="-1.7188" stop="-1.5" step="0.25"></SnrRange>
-      <SnrArray>
-      </SnrArray>
-      <Code type="Polar">
-        <Param name="m">10</Param>
-        <Param name="k">488</Param>
-        <Param name="sequenceFile">C:\Users\ische\source\repos\PolarCodes\polar_sequences\1024.txt</Param>
-        <Param name="CRC">100000000000000001100011</Param>
+  <Simulation>
+    <ResultFile>C:\Users\ische\source\repos\PolarCodes\results\test_10.results</ResultFile>
+    <AdditionalFile>C:\Users\ische\source\repos\PolarCodes\results\test_10.stat</AdditionalFile>
+    <Simulator type="MC">
+      <Param name="maxTestsCount">10000000</Param>
+      <Param name="maxRejectionsCount">2000000</Param>
+      <Param name="isSigmaDependOnR">0</Param>
+    </Simulator>
+    <SnrRange start="-1" stop="-0.5" step="0.5"></SnrRange>
+    <SnrArray>
+    </SnrArray>
+    <Code type="Polar">
+      <Param name="m">8</Param>
+      <Param name="k">120</Param>
+      <Param name="sequenceFile">C:\Users\ische\source\repos\PolarCodes\polar_sequences\256.txt</Param>
+      <Param name="CRC24">100000000000000001100011</Param>
+      <Param name="CRC12">100000001111</Param>
+      <Param name="CRC">00000111</Param>
+    </Code>
+    <Decoder type="SCLFlipStat">
 
-        <Param name="CRC1">111</Param>
-        
-      </Code>
-      <Decoder type="SCFlipProg">
-        
-        <Param name="gammaLeft">3.6</Param>
-        <Param name="gammaRight">2</Param>
-        <Param name="level">4</Param>
-        <Param name="omegaArr">1.1,1.1,0.5,0.25,1.1</Param>
+      <!--SC Flip Progressive decoder params-->
+      <Param name="gammaLeft">4</Param>
+      <Param name="gammaRight">3</Param>
+      <Param name="level">1</Param>
+      <Param name="omegaArr">1.1,1.1,0.5,0.25,1.1</Param>
 
-        <Param name="T">5</Param>
-        <Param name="delta">1.0</Param>
-      </Decoder>
-    </Simulation>
+      <!--SC Fano decoder params-->
+      <Param name="T">0</Param>
+      <Param name="delta">1.0</Param>
+
+      <!--SC Flip decoder params-->
+      <Param name="T">200</Param>
+
+      <!--SC List decoder params-->
+      <Param name="L">8</Param>
+
+      <!--SC Flip Stat decoder-->
+
+    </Decoder>
+  </Simulation>
 </Config>
