@@ -90,7 +90,9 @@ polar_dec(
    double alpha, // SCLFlip constant.
    double *Malpha, // List of alphas.
    int *sfs,
-   double *smal
+   double *smal,
+   int *inf_word,
+   double *mals
 );
 
 #endif // #ifndef POLAR_SCL_INNER_H

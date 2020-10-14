@@ -105,7 +105,40 @@ dec_bpsk_list_flipping(
    int *var2,
    int *var3
 );
+
+#ifdef LISTFLIPPINGOPT
+int
+dec_bpsk_list_flipping_opt(
+   void *cdc,
+   double c_out[],
+   int x_dec[],
+   int T,
+   double alpha,
+   int *var1,
+   int *var2,
+   int *var3,
+   int *x
+);
+
+#ifdef LISTFLIPPINGTHRESHOLD
+int
+dec_bpsk_list_flipping_threshold(
+   void *cdc,
+   double c_out[],
+   int x_dec[],
+   int T,
+   double alpha,
+   int *var1,
+   int *var2,
+   int *var3,
+   int *x,
+   double threshold
+);
+#endif
+#endif
 #endif // LISTFLIPPING
+
+
 
 #ifdef LISTFLIPPINGPRECALC
 int
