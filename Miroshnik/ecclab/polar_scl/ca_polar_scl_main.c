@@ -92,6 +92,9 @@ int get_membuf_size(decoder_type *dd) {
   mem_buf_size += dd->c_n * sizeof(double); // Malpha_cur
   mem_buf_size += flsiz * sizeof(slitem); // slist_alpha
 #endif // LISTFLIPPING
+#ifdef LISTFLIPPINGOPT
+  mem_buf_size += dd->c_k * sizeof(int); // cur_inf_word
+#endif
    return mem_buf_size;
 }
 
@@ -201,6 +204,75 @@ int get_best_in_list(
 
   return best_ind;
 }
+
+#if defined LISTFLIPPINGOPT
+
+#define INF (1e10)
+
+int find_top_pos(double *min_abs_llrs, int max_diff_pos, int c_n) {
+   double cur_llr;
+   int i, pos, top_pos;
+   top_pos = 0;
+   while (1) {
+      cur_llr = INF;
+      pos = 0;
+      for (i = 0; i < c_n; i++) {
+         if (min_abs_llrs[i] != -1 && cur_llr > min_abs_llrs[i]) {
+            cur_llr = min_abs_llrs[i];
+            pos = i;
+         }
+      }
+      min_abs_llrs[pos] = INF;
+      if (max_diff_pos == pos) {
+         return top_pos;
+      }
+      top_pos++;
+   }
+}
+
+void find_lowest_llrs(double *min_abs_llrs, int c_n, int T, int* res) {
+   double cur_llr;
+   int i, pos, j;
+   for (j = 0; j < T; j++) {
+      cur_llr = INF;
+      pos = 0;
+      for (i = 0; i < c_n; i++) {
+         if (min_abs_llrs[i] != -1 && cur_llr > min_abs_llrs[i]) {
+            cur_llr = min_abs_llrs[i];
+            pos = i;
+         }
+      }
+      min_abs_llrs[pos] = INF;
+
+      res[j] = pos;
+   }
+}
+
+#if defined LISTFLIPPINGTHRESHOLD
+void find_lowest_llrs_threshold(double *min_abs_llrs, int c_n, int T, int* res, double threshold) {
+   double cur_llr;
+   int i, pos, j, cnt_success;
+   cnt_success = 0;
+   for (j = 0; j < T; j++) {
+      cur_llr = INF;
+      pos = -1;
+      for (i = 0; i < c_n; i++) {
+         if (min_abs_llrs[i] != -1 && cur_llr > min_abs_llrs[i]) {
+            cur_llr = min_abs_llrs[i];
+            pos = i;
+         }
+      }
+      if (min_abs_llrs[pos] > threshold || pos == -1) break; 
+      min_abs_llrs[pos] = INF;
+
+      res[j] = pos;
+      cnt_success++;
+   }
+   for (i = cnt_success; i < T; i++) res[i] = -1;
+}
+#endif
+
+#endif
 
 #if defined LISTFLIPPING || defined LISTFLIPPINGPRECALC || defined LISTFLIPPINGFAST
 int check_crc_list(
@@ -865,7 +937,7 @@ dec_bpsk(
    for (i = 0; i < dd->c_n; i++) dec_input[i] = c_out[i] * dd->sg22;
 
    if (dd->dc.ret_list) {
-      polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, -1, -1, NULL, NULL, NULL);
+      polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, -1, -1, NULL, NULL, NULL, NULL, NULL);
       best_ind = get_best_in_list(x_candidates, dd->eff_k, dd->dc.peak_lsiz, dd->crc, dd->crc_len);
 #ifdef DBG
       printf("best_ind: %d\n", best_ind);
@@ -873,7 +945,7 @@ dec_bpsk(
       memcpy(x_dec, x_candidates + best_ind * dd->c_k, dd->eff_k * sizeof(int));
    }
    else {
-      polar_dec(&(dd->dc), dec_input, x_dec, NULL, NULL, -1, -1, -1, NULL, NULL, NULL);
+      polar_dec(&(dd->dc), dec_input, x_dec, NULL, NULL, -1, -1, -1, NULL, NULL, NULL, NULL, NULL);
    }
 
    free(mem_buf);
@@ -938,14 +1010,14 @@ dec_bpsk_flipping(
 
    // dec_input <-- 2 * c_out / sg^2.
    for (i = 0; i < dd->c_n; i++) dec_input[i] = c_out[i] * dd->sg22;
-   polar_dec(&(dd->dc), dec_input, x_dec, NULL, lv_array, -1, -1, -1, NULL, NULL, NULL);
+   polar_dec(&(dd->dc), dec_input, x_dec, NULL, lv_array, -1, -1, -1, NULL, NULL, NULL, NULL, NULL);
 #ifdef RETURNLLRS
    print_dec_info(dd, x_dec, lv_array);
 #endif // RETURNLLRS
    if (T > 0 && check_crc(x_dec, dd->eff_k, 1, dd->crc, dd->crc_len)) {
       find_lr_indices(lv_array->llrs, dd->dc.node_table, dd->c_n, T, lrdec);
       for (i = 0; i < T; i++) {
-         polar_dec(&(dd->dc), dec_input, x_dec, NULL, lv_array, lrdec[i], -1, -1, NULL, NULL, NULL);
+         polar_dec(&(dd->dc), dec_input, x_dec, NULL, lv_array, lrdec[i], -1, -1, NULL, NULL, NULL, NULL, NULL);
          if (!check_crc(x_dec, dd->eff_k, 1, dd->crc, dd->crc_len)) {
             break;
          }
@@ -1010,7 +1082,7 @@ dec_bpsk_list_flipping(
 
    // dec_input <-- 2 * c_out / sg^2.
    for (i = 0; i < dd->c_n; i++) dec_input[i] = c_out[i] * dd->sg22;
-   polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, -1, alpha, Malpha, NULL, NULL);
+   polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, -1, alpha, Malpha, NULL, NULL, NULL, NULL);
    best_ind = check_crc_list(x_candidates, dd->eff_k, dd->dc.peak_lsiz, dd->crc, dd->crc_len);
    if (best_ind != -1) {
       memcpy(x_dec, x_candidates + best_ind * dd->c_k, dd->eff_k * sizeof(int));
@@ -1018,7 +1090,7 @@ dec_bpsk_list_flipping(
    else {
       find_alpha_indices(Malpha, dd->dc.node_table, dd->c_n, T, Malpha_maxs);
       for (i = 0; i < T; i++) {
-         polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, Malpha_maxs[i], alpha, Malpha, NULL, NULL);
+         polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, Malpha_maxs[i], alpha, Malpha, NULL, NULL, NULL, NULL);
          best_ind = check_crc_list(x_candidates, dd->eff_k, dd->dc.peak_lsiz, dd->crc, dd->crc_len);
          if (best_ind != -1) {
 
@@ -1040,6 +1112,186 @@ dec_bpsk_list_flipping(
 
    return 0;
 }
+ 
+#if defined LISTFLIPPINGOPT
+int
+dec_bpsk_list_flipping_opt(
+   void *cdc,
+   double c_out[],
+   int x_dec[],
+   int T,
+   double alpha,
+   int *var1,
+   int *var2,
+   int *var3,
+   int *x
+)
+{
+   cdc_inst_type *dd;
+   double *dec_input, *Malpha, *min_abs_llrs;
+   int *x_candidates, *Malpha_maxs;
+   uint8 *mem_buf, *mem_buf_ptr;
+   int mem_buf_size;
+   int i, j, best_ind, max_diff_pos, max_diff_pos_c, q;
+   int x0, top_pos, freq;
+   double d1;
+
+   dd = (cdc_inst_type *)cdc;
+
+   mem_buf_size = dd->c_n * sizeof(double); // dec_input
+   mem_buf_size += dd->dc.peak_lsiz * dd->c_k * sizeof(int); // x_candidates
+   mem_buf_size += dd->c_n * sizeof(double); // Malpha
+   mem_buf_size += T * sizeof(int); // Malpha_maxs
+   mem_buf_size += dd->c_n * sizeof(double); // min_abs_llrs
+
+   mem_buf = (uint8 *)malloc(mem_buf_size);
+   if (mem_buf == NULL) {
+      err_msg("dec_bpsk: Short of memory.");
+      return -1;
+   }
+   mem_buf_ptr = mem_buf;
+
+   dec_input = (double *)mem_buf_ptr;
+   mem_buf_ptr += dd->c_n * sizeof(double);
+
+   x_candidates = (int *)mem_buf_ptr;
+   mem_buf_ptr += dd->dc.peak_lsiz * dd->c_k * sizeof(int);
+
+   Malpha = (double *)mem_buf_ptr;
+   mem_buf_ptr += dd->c_n * sizeof(double);
+
+   Malpha_maxs = (int *)mem_buf_ptr;
+   mem_buf_ptr += T * sizeof(int);
+
+   min_abs_llrs = (double *)mem_buf_ptr;
+   mem_buf_ptr += dd->c_n * sizeof(double);
+
+   for (i = 0; i < dd->eff_k; i++) x_dec[i] = 0;
+
+   // dec_input <-- 2 * c_out / sg^2.
+   for (i = 0; i < dd->c_n; i++) dec_input[i] = c_out[i] * dd->sg22;
+   x0 = x[0];
+   polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, -1, alpha, Malpha, NULL, NULL, x, min_abs_llrs);
+   max_diff_pos = x[0];
+   x[0] = x0;
+   best_ind = check_crc_list(x_candidates, dd->eff_k, dd->dc.peak_lsiz, dd->crc, dd->crc_len);
+   Malpha_maxs[0] = max_diff_pos;
+   if (best_ind != -1) {
+      memcpy(x_dec, x_candidates + best_ind * dd->c_k, dd->eff_k * sizeof(int));
+   }
+   else {
+      T = 1;
+      for (q = 0; q < T; q++) {
+         polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, Malpha_maxs[q], alpha, Malpha, NULL, NULL, x, min_abs_llrs);
+         x[0] = x0;
+         best_ind = check_crc_list(x_candidates, dd->eff_k, dd->dc.peak_lsiz, dd->crc, dd->crc_len);
+         if (best_ind != -1) {
+            memcpy(x_dec, x_candidates + best_ind * dd->c_k, dd->eff_k * sizeof(int));
+            break;
+         }
+      }
+   }
+
+   free(mem_buf);
+
+   return 0;
+}
+
+#if defined LISTFLIPPINGTHRESHOLD
+int
+dec_bpsk_list_flipping_threshold(
+   void *cdc,
+   double c_out[],
+   int x_dec[],
+   int T,
+   double alpha,
+   int *var1,
+   int *var2,
+   int *var3,
+   int *x,
+   double threshold
+)
+{
+   cdc_inst_type *dd;
+   double *dec_input, *Malpha, *min_abs_llrs;
+   int *x_candidates, *Malpha_maxs;
+   uint8 *mem_buf, *mem_buf_ptr;
+   int mem_buf_size;
+   int i, j, best_ind, max_diff_pos, max_diff_pos_c, q;
+   int x0, top_pos, freq;
+   double d1;
+
+   dd = (cdc_inst_type *)cdc;
+
+   mem_buf_size = dd->c_n * sizeof(double); // dec_input
+   mem_buf_size += dd->dc.peak_lsiz * dd->c_k * sizeof(int); // x_candidates
+   mem_buf_size += dd->c_n * sizeof(double); // Malpha
+   mem_buf_size += T * sizeof(int); // Malpha_maxs
+   mem_buf_size += dd->c_n * sizeof(double); // min_abs_llrs
+
+   mem_buf = (uint8 *)malloc(mem_buf_size);
+   if (mem_buf == NULL) {
+      err_msg("dec_bpsk: Short of memory.");
+      return -1;
+   }
+   mem_buf_ptr = mem_buf;
+
+   dec_input = (double *)mem_buf_ptr;
+   mem_buf_ptr += dd->c_n * sizeof(double);
+
+   x_candidates = (int *)mem_buf_ptr;
+   mem_buf_ptr += dd->dc.peak_lsiz * dd->c_k * sizeof(int);
+
+   Malpha = (double *)mem_buf_ptr;
+   mem_buf_ptr += dd->c_n * sizeof(double);
+
+   Malpha_maxs = (int *)mem_buf_ptr;
+   mem_buf_ptr += T * sizeof(int);
+
+   min_abs_llrs = (double *)mem_buf_ptr;
+   mem_buf_ptr += dd->c_n * sizeof(double);
+
+   for (i = 0; i < dd->eff_k; i++) x_dec[i] = 0;
+
+   // dec_input <-- 2 * c_out / sg^2.
+   for (i = 0; i < dd->c_n; i++) dec_input[i] = c_out[i] * dd->sg22;
+   x0 = x[0];
+   polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, -1, alpha, Malpha, NULL, NULL, x, min_abs_llrs);
+   max_diff_pos = x[0];
+   x[0] = x0;
+   best_ind = check_crc_list(x_candidates, dd->eff_k, dd->dc.peak_lsiz, dd->crc, dd->crc_len);
+   find_lowest_llrs_threshold(min_abs_llrs, dd->c_n, dd->c_n, Malpha_maxs, threshold);
+   for (q = 0; q < T; q++) {
+      if (Malpha_maxs[q] == -1) {
+         var1[0] = q;
+         break;
+      }
+   }
+   if (best_ind != -1) {
+      memcpy(x_dec, x_candidates + best_ind * dd->c_k, dd->eff_k * sizeof(int));
+   }
+   else {
+      for (q = 0; q < T; q++) {
+         if (Malpha_maxs[q] == -1) {
+            break;
+         }
+         polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, Malpha_maxs[q], alpha, Malpha, NULL, NULL, x, min_abs_llrs);
+         x[0] = x0;
+         best_ind = check_crc_list(x_candidates, dd->eff_k, dd->dc.peak_lsiz, dd->crc, dd->crc_len);
+         if (best_ind != -1) {
+            var3[0] = 1;
+            memcpy(x_dec, x_candidates + best_ind * dd->c_k, dd->eff_k * sizeof(int));
+            break;
+         }
+      }
+   }
+
+   free(mem_buf);
+
+   return 0;
+}
+#endif
+#endif
 #endif // LISTFLIPPING
 
 #ifdef LISTFLIPPINGPRECALC
@@ -1088,13 +1340,13 @@ dec_bpsk_list_flipping_precalc(
 
    // dec_input <-- 2 * c_out / sg^2.
    for (i = 0; i < dd->c_n; i++) dec_input[i] = c_out[i] * dd->sg22;
-   polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, -1, -1, NULL, NULL, NULL);
+   polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, -1, -1, NULL, NULL, NULL, NULL, NULL);
    best_ind = check_crc_list(x_candidates, dd->eff_k, dd->dc.peak_lsiz, dd->crc, dd->crc_len);
    if (best_ind != -1) {
       memcpy(x_dec, x_candidates + best_ind * dd->c_k, dd->eff_k * sizeof(int));
    }
    else {
-      precalc_bits = fopen("./precalc_bits/precalc_polar7_ca6_k64_L8_T10.spf.spf", "r");
+      precalc_bits = fopen("./precalc_bits/precalc_polar9_ca24_k256_L2.spf", "r");
       i = 0;
       while (!feof (precalc_bits)) {
          if (i == T) break;
@@ -1103,7 +1355,7 @@ dec_bpsk_list_flipping_precalc(
       }
       fclose(precalc_bits);
       for (i = 0; i < T; i++) {
-         polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, Malpha_maxs[i], -1, NULL, NULL, NULL);
+         polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, Malpha_maxs[i], -1, NULL, NULL, NULL, NULL, NULL);
          best_ind = check_crc_list(x_candidates, dd->eff_k, dd->dc.peak_lsiz, dd->crc, dd->crc_len);
          if (best_ind != -1) {
             memcpy(x_dec, x_candidates + best_ind * dd->c_k, dd->eff_k * sizeof(int));
@@ -1169,7 +1421,7 @@ dec_bpsk_list_flipping_fast(
 
    // dec_input <-- 2 * c_out / sg^2.
    for (i = 0; i < dd->c_n; i++) dec_input[i] = c_out[i] * dd->sg22;
-   polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, -1, -1, NULL, subcodes_first_symb, subcodes_min_abs_llr);
+   polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, -1, -1, NULL, subcodes_first_symb, subcodes_min_abs_llr, NULL, NULL);
    best_ind = check_crc_list(x_candidates, dd->eff_k, dd->dc.peak_lsiz, dd->crc, dd->crc_len);
    if (best_ind != -1) {
       memcpy(x_dec, x_candidates + best_ind * dd->c_k, dd->eff_k * sizeof(int));
@@ -1177,7 +1429,7 @@ dec_bpsk_list_flipping_fast(
    else {
       find_subcodes_indices(subcodes_first_symb, subcodes_min_abs_llr, dd->dc.node_table, dd->c_n, T, subcodes_mins);
       for (i = 0; i < T; i++) {
-         polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, subcodes_mins[i], -1, NULL, subcodes_first_symb, subcodes_min_abs_llr);
+         polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, subcodes_mins[i], -1, NULL, subcodes_first_symb, subcodes_min_abs_llr, NULL, NULL);
          best_ind = check_crc_list(x_candidates, dd->eff_k, dd->dc.peak_lsiz, dd->crc, dd->crc_len);
          if (best_ind != -1) {
             memcpy(x_dec, x_candidates + best_ind * dd->c_k, dd->eff_k * sizeof(int));
@@ -1386,7 +1638,15 @@ void bcjr2(double *input, double sigma, int input_len, int *cdc_size, int *gen_m
    free(likelihood);
 }
 
-
+// cdc - вспомогательные данные 
+// c_out - входящие llr
+// x_dec - результат декодирования
+// inner_matrix_inv - обратная матрица внутреннего кода (совпадает с матрицей внутреннего кода)
+// in_cd_len - размер матрицы внутреннего кода
+// out_cd_len - длина кода
+// cdc_opts - способы декодирования. 0 - ML декодер, 1 - синдромное декоирование
+// cdc_sizes - размер матриц внешних кодов
+// grid4 - сетка для синдромного декодирования
 int
 dec_bpsk_gcc(
    void *cdc,
@@ -1421,9 +1681,11 @@ dec_bpsk_gcc(
    for (i = 0; i < in_vecs_len; i++) {
       inner_matrix_cds[i] = (double *)malloc(sizeof(double) * in_vecs_len);
    }
-
+   
+   // in_dec_input - вход во внутренний декодер
    for (i = 0; i < dd->c_n; i++) in_dec_input[i] = c_out[i] * dd->sg22;
 
+   // inner_matrix_cds - кодовое слово
    for (i = 0; i < in_cd_len; i++) {
       for (j = 0; j < in_vecs_len; j++) {
          inner_matrix_cds[j][i] = in_dec_input[i*in_vecs_len + j];
@@ -1432,6 +1694,7 @@ dec_bpsk_gcc(
 
    cur_pos_dec = 0;
    for (i = 0; i < in_cd_len; i++) {
+      // выкинем нужное количество верхних строк матрицы внутреннего кода
       for (j = i; j < in_cd_len; j++) {
          for (k = 0; k < in_cd_len; k++) {
             inner_matrix[(j-i) * in_cd_len + k] = inner_matrix_inv[j * in_cd_len + k];
@@ -1440,6 +1703,7 @@ dec_bpsk_gcc(
       inner_matrix_size[0] = in_cd_len - i;
       inner_matrix_size[1] = in_cd_len;
       for (j = 0; j < in_vecs_len; j++) {
+         // inner_codeword - кодовое слово внутреннего кода
          for (k = 0; k < in_cd_len; k++) {
             inner_codeword[k] = inner_matrix_cds[j][k];
             inner_dec_codeword[k] = INF;
@@ -1466,6 +1730,7 @@ dec_bpsk_gcc(
          SyndrDec(out_dec_input + i * in_vecs_len, in_vecs_len, dd->dc.node_table + i*in_vecs_len,
                   cdc_sizes + i*2, cdc_mats[i], x_dec + cur_pos_dec, grid4);
       }
+      // исправление ошибок с учетом декодирования внешнего кода
       for (j = 0; j < in_vecs_len; j++) {
          if ((1 - 2 * ret_codeword[j]) * out_dec_input[i * in_vecs_len + j] < 0) {
             for (k = 0; k < in_cd_len; k++) {

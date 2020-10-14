@@ -118,6 +118,15 @@ int *subcodes_first_symb;
 double *subcodes_min_abs_llr;
 #endif
 
+#ifdef LISTFLIPPINGOPT
+int *cur_inf_word;
+int flip_step;
+int open_node_counter;
+int cur_true_pos;
+double min_abs_llr;
+double *min_abs_llrs;
+#endif
+
 //-----------------------------------------------------------------------------
 // Functions.
 
@@ -271,6 +280,11 @@ void polar0_branch(
   xlitem x;
   ylitem *yp;
   int i;
+  #ifdef LISTFLIPPINGOPT
+  int is_in_list;
+  double max_slist = -INF;
+  min_abs_llr = INF;
+  #endif
 
 #ifdef DBG
   printf("rm00 branch.\n");
@@ -313,6 +327,15 @@ void polar0_branch(
     slist_alpha[cur_ind0] += EST0_TO_LNP0(alpha_cur * y);
     slist_alpha[cur_ind1] += EST0_TO_LNP1(alpha_cur * y);
     #endif // LISTFLIPPING
+
+    #ifdef LISTFLIPPINGOPT
+    if (cur_ind0 == cur_true_pos && open_node_counter < dd->c_k) {
+      if (cur_inf_word[open_node_counter] != x) cur_true_pos = cur_ind1;
+    }
+    if (max_slist < slist[cur_ind0]) {
+      min_abs_llr = fmin(min_abs_llr, fabs(y));
+    }
+    #endif
 
     
 #ifdef FLIPPING
@@ -361,6 +384,21 @@ void polar0_branch(
     while (cur_lsiz > peak_lsiz) frind[--frindp] = lorder[--cur_lsiz];
     #endif // LISTFLIPPING
   }
+
+  #ifdef LISTFLIPPINGOPT
+  if (flip_step == -1) {
+    is_in_list = 0;
+    for (i = 0; i < cur_lsiz; i++) {
+      if (lorder[i] == cur_true_pos) {
+        is_in_list = 1;
+        break;
+      }
+    }
+    if (!is_in_list) {
+      flip_step = node_counter;
+    }
+  }
+  #endif
 
   for (i = 0; i < cur_lsiz; i++) {
     cur_ind1 = lorder[i];
@@ -824,9 +862,16 @@ void polar_dec_inner(
   if (m == 0) {
     if (node_table[node_counter] == 0) {
       polar0_skip(dd);
+      #ifdef LISTFLIPPINGOPT
+      min_abs_llrs[node_counter] = -1;
+      #endif
     }
     else {
       polar0_branch(dd, node_table[node_counter]);
+      #ifdef LISTFLIPPINGOPT
+      open_node_counter++;
+      min_abs_llrs[node_counter] = min_abs_llr; 
+      #endif
     }
     node_counter++;
     return;
@@ -969,7 +1014,9 @@ polar_dec(
    double alpha, // SCLFlip constant.
    double *Malpha, // List of alphas.
    int *sfs,
-   double *smal
+   double *smal,
+   int *inf_word,
+   double *mals
 )
 {
   int i, j, i1;
@@ -1072,6 +1119,18 @@ subcodes_first_symb = sfs;
 subcodes_min_abs_llr = smal;
 #endif
 
+#ifdef LISTFLIPPINGOPT
+  cur_inf_word = inf_word;
+  cur_true_pos = 0;
+  open_node_counter = 0;
+  flip_step = -1;
+  min_abs_llrs = mals;
+#endif
+
+#ifdef LISTFLIPPINGPRECALC
+  fstep = Si;
+#endif
+
 #ifdef DBG2
   printf("\nAssigned buffer size: %ld\n", mem_buf_ptr - dd->mem_buf);
 #endif
@@ -1147,6 +1206,10 @@ subcodes_min_abs_llr = smal;
 
 #ifdef LISTFLIPPINGFAST
 subcodes_first_symb[inv_subcodes_counter] = -2;
+#endif
+
+#ifdef LISTFLIPPINGOPT
+  inf_word[0] = flip_step;
 #endif
 
   if (dd->ret_list) {

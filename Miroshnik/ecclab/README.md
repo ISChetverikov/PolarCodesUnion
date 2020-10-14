@@ -152,6 +152,8 @@ with the best metric as `dtrm_glp` would do. When CRC is set, the decoder picks 
 Keys:
 * `-DFLIPPING` - SCL with flipping bits
 * `-DLISTFLIPPING` - SCLFlip
+* `-DLISTFLIPPING -DLISTFLIPPINGOPT` - SCLFLip with 1 optimal flip
+* `-DLISTFLIPPING -DLISTFLIPPINGOPT -DLISTFLIPPINGTHRESHOLD` - calculate FER with different threshold for |llr|
 * `-DLISTFLIPPINGPRECALC` - SCLFlip with precalc bits
 * `-DLISTFLIPPINGFAST` - SCLFlip with precalc bits and fast calculations for subcodes
 * `-DGCCDEC` - Generalized Concatenated decoder for (128, 64) code.

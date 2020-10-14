@@ -315,6 +315,16 @@ int sim_run(
    x_dec = (int *)malloc(c_n * sizeof(int));
    c_in = (double *)malloc(c_n * sizeof(double));
    c_out = (double *)malloc(c_n * sizeof(double));
+
+   #if defined LISTFLIPPINGTHRESHOLD
+   int cur_th;
+   int max_threshold = 15;
+   int* cnt_errors_threshold = malloc(sizeof(int) * max_threshold);
+   int* cnt_T_threshold = malloc(sizeof(int) * max_threshold);
+   memset(cnt_errors_threshold, 0, sizeof(int) * max_threshold);
+   memset(cnt_T_threshold, 0, sizeof(int) * max_threshold);
+   #endif
+
    /*#ifdef LISTFLIPPINGFAST
    Malpha_maxs = (int *)malloc(sim->flip_num * sizeof(int));
    precalc_bits = fopen("./precalc_bits/precalc_polar7_ca6_k64_L8_T10.spf", "r");
@@ -378,10 +388,40 @@ int sim_run(
          #endif // FLIPPING
 
          #ifdef LISTFLIPPING
-         if (dec_bpsk_list_flipping(sim->dc_inst, c_out, x_dec, sim->flip_num, sim->flip_alpha, var1, var2, var3)) {
-            err_msg("sim_run(): Error while decoding.");
-            return -1;
-         }
+         #if !defined LISTFLIPPINGOPT
+            if (dec_bpsk_list_flipping(sim->dc_inst, c_out, x_dec, sim->flip_num, sim->flip_alpha, var1, var2, var3)) {
+               err_msg("sim_run(): Error while decoding.");
+               return -1;
+            }
+         #endif
+
+         #if defined LISTFLIPPINGOPT
+         
+         #if !defined LISTFLIPPINGTHRESHOLD
+            if (dec_bpsk_list_flipping_opt(sim->dc_inst, c_out, x_dec, sim->flip_num, sim->flip_alpha, var1, var2, var3, x)) {
+               err_msg("sim_run(): Error while decoding.");
+               return -1;
+            }
+         #endif
+
+         #if defined LISTFLIPPINGTHRESHOLD
+            for (cur_th = 0; cur_th < max_threshold; cur_th++) {
+               var3[0] = 0;
+               if (dec_bpsk_list_flipping_threshold(sim->dc_inst, c_out, x_dec, c_n, sim->flip_alpha, var1, var2, var3, x, (double)cur_th)) {
+                  err_msg("sim_run(): Error while decoding.");
+                  return -1;
+               }
+               en = 0;
+               for (i = 0; i < c_k; i++) if (x_dec[i] != x[i]) en++;
+               if (en) {
+                  cnt_errors_threshold[cur_th]++;
+                  if (var3[0]) var2[0]++;
+               }
+               cnt_T_threshold[cur_th] += var1[0];
+            }
+         #endif
+
+         #endif
          #endif // LISTFLIPPING
 
          #ifdef LISTFLIPPINGPRECALC
@@ -436,6 +476,14 @@ int sim_run(
             return 1;
          }
       }
+
+      #if defined LISTFLIPPINGTHRESHOLD
+      printf("Number of CRC errors: %d\n", var2[0]);
+      printf("threshold FER T\n");
+      for (cur_th = 0; cur_th < max_threshold; cur_th++) {
+         printf("%d %f %f\n", cur_th, (double) cnt_errors_threshold[cur_th] / sim->trn_req[csnrn], (double) cnt_T_threshold[cur_th] / sim->trn_req[csnrn]);
+      }
+      #endif
 
       sim->csnrn = ++csnrn;
 
@@ -567,6 +615,8 @@ int sim_run(
    }
    fclose(inner_code_inv);
 
+   // следующие 4 матрицы - порождающие матрицы внешних кодов
+
    FILE* outer_code_inv1 = fopen("./GCCmats/sylvester7sub1.mat", "r");
 
    for (i = 0; i < 2; i++) {
@@ -643,6 +693,7 @@ int sim_run(
          sim->trn[csnrn]++;
 
          // Generate random or zero code word.
+         // coding
          if (sim->use_rndcw) {
             for (i = 0; i < c_k; i++) x[i] = (RND > 0.5) ? 1 : 0;
             enc_bpsk_gcc(sim->dc_inst, x, c_in, outer_matrix, inner_matrix, out_cd_len, in_cd_len);
@@ -738,7 +789,7 @@ int sim_run(
       printf("%f, %f, %f, %f, %f \n", sim->snr_db[csnrn], (double) err_nums1 / sim->trn_req[csnrn],
                                      (double) err_nums2 / sim->trn_req[csnrn], (double) err_nums3 / sim->trn_req[csnrn],
                                      (double) err_nums4 / sim->trn_req[csnrn]);
-      printf("%d %d %d %d %d\n", err_nums1, err_nums2, err_nums3, err_nums4, sim->en_bl[csnrn]);
+      //printf("%d %d %d %d %d\n", err_nums1, err_nums2, err_nums3, err_nums4, sim->en_bl[csnrn]);
 
       sim->csnrn = ++csnrn;
    }
