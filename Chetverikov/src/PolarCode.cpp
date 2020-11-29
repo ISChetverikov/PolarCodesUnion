@@ -45,6 +45,9 @@ PolarCode::PolarCode(int m, int k, std::vector<int> reliabilitySequence, std::ve
 	}
 	_unfrozenPolarSequenceWithCrc = _unfrozenPolarSequence;
 	_unfrozenPolarSequenceWithCrc.insert(_unfrozenPolarSequenceWithCrc.begin(), _crcUnfrozenPolarSequence.begin(), _crcUnfrozenPolarSequence.end());
+
+	_unfrozenBitsWithCrc = _unfrozenPolarSequenceWithCrc;
+	sort(_unfrozenBitsWithCrc.begin(), _unfrozenBitsWithCrc.end());
 }
 
 size_t PolarCode::m() {
@@ -78,6 +81,10 @@ std::vector<int> PolarCode::UnfrozenPolarSequenceWithCrc() {
 
 std::vector<int> PolarCode::CrcMask() {
 	return _crcMask;
+}
+
+std::vector<int> PolarCode::UnfrozenBitsWithCrc() {
+	return _unfrozenBitsWithCrc;
 }
 
 std::vector<int> PolarCode::CrcUnfrozenBits() {

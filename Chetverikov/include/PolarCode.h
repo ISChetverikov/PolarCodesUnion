@@ -18,6 +18,7 @@ protected:
 	std::vector<int> _unfrozenPolarSequenceWithCrc;
 
 	std::vector<int> _unfrozenBits;
+	std::vector<int> _unfrozenBitsWithCrc;
 	std::vector<int> _crcUnfrozenBits;
 
 	std::vector<int> _crcPoly;
@@ -39,6 +40,7 @@ public:
 	std::vector<int> UnfrozenPolarSequenceWithCrc();
 
 	std::vector<int> UnfrozenBits();
+	std::vector<int> UnfrozenBitsWithCrc();
 	std::vector<int> CrcUnfrozenBits();
 
 	std::vector<int> CrcPoly();
