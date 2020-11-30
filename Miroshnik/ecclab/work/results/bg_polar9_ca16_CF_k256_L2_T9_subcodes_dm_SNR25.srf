@@ -1,0 +1,12 @@
+code_n 512
+code_k 256
+
+SNR { 2.5 }
+tr_num { 800000 }
+en_bit { 484543 }
+en_bl { 3789 }
+ml_tr_num { 800000 }
+enml_bl { 5 }
+
+% SNR   ep_bit      ep_bl       epml_bl
+% 2.50  2.366e-03  4.736e-03  6.250e-06

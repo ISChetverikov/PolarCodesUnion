@@ -284,13 +284,13 @@ void polar0_branch(
   int is_in_list;
   double max_slist = -INF;
   min_abs_llr = INF;
+  double min1, max2;
   #endif
 
 #ifdef DBG
   printf("rm00 branch.\n");
   print_list("a");
 #endif
-
   for (i = 0; i < cur_lsiz_old; i++) {
 
     cur_ind0 = lorder[i];
@@ -329,12 +329,18 @@ void polar0_branch(
     #endif // LISTFLIPPING
 
     #ifdef LISTFLIPPINGOPT
-    if (cur_ind0 == cur_true_pos && open_node_counter < dd->c_k) {
-      if (cur_inf_word[open_node_counter] != x) cur_true_pos = cur_ind1;
+    if (cur_ind0 == cur_true_pos) {
+      if (cur_inf_word[open_node_counter] != x) {
+        cur_true_pos = cur_ind1;
+      }
     }
     if (max_slist < slist[cur_ind0]) {
-      min_abs_llr = fmin(min_abs_llr, fabs(y));
+      //min_abs_llr = fmin(min_abs_llr, fabs(y));
+  //if (node_counter > 47) if (!tekker) printf("0\n");
+      min_abs_llr = fabs(y);
+      max_slist = slist[cur_ind0];
     }
+    //if (node_counter > 47) printf("%f %f %f ", slist[cur_ind1] - EST0_TO_LNP1(y), slist[cur_ind0], slist[cur_ind1]);
     #endif
 
     
@@ -344,6 +350,10 @@ void polar0_branch(
     lv_array_cur[cur_ind1].llrs[node_counter] = -yp[0];
 #endif // FLIPPING
   }
+
+  #ifdef LISTFLIPPINGOPT
+  if (node_counter == fstep) fstep = -1;
+  #endif
 
   #ifdef LISTFLIPPING
   Malpha_cur[node_counter] = -INF;
@@ -356,6 +366,18 @@ void polar0_branch(
   if (cur_lsiz > peak_lsiz) { 
     #ifdef LISTFLIPPING
     qpartition(lorder, cur_lsiz, peak_lsiz);
+    #ifdef LISTFLIPPINGOPT
+    min1 = INF;
+    max2 = -INF;
+    for (i = 0; i < peak_lsiz; i++) min1 = fmin(min1, slist[lorder[i]]);
+    for (i = peak_lsiz; i < cur_lsiz; i++) max2 = fmax(max2, slist[lorder[i]]);
+    /*min1 = max2 = 0;
+    for (i = 0; i < peak_lsiz; i++) min1 += slist[lorder[i]];
+    for (i = peak_lsiz; i < cur_lsiz; i++) max2 += slist[lorder[i]];
+    min1 /= peak_lsiz;
+    max2 /= (cur_lsiz - peak_lsiz);*/
+    min_abs_llr = min1 - max2;
+    #endif
     ALPHA_CALC(slist_alpha, lorder, peak_lsiz, cur_lsiz, Malpha_cur, node_counter);
     if (node_counter != fstep) {
       while (cur_lsiz > peak_lsiz) frind[--frindp] = lorder[--cur_lsiz];
@@ -386,7 +408,7 @@ void polar0_branch(
   }
 
   #ifdef LISTFLIPPINGOPT
-  if (flip_step == -1) {
+  if (flip_step == -1 && open_node_counter < dd->c_k) {
     is_in_list = 0;
     for (i = 0; i < cur_lsiz; i++) {
       if (lorder[i] == cur_true_pos) {
@@ -394,7 +416,7 @@ void polar0_branch(
         break;
       }
     }
-    if (!is_in_list) {
+    if (!is_in_list && open_node_counter < dd->c_n / 2) {
       flip_step = node_counter;
     }
   }
@@ -498,6 +520,9 @@ void DecRate1(decoder_type *dd, int m, int n, int peak_lsiz) {
   int **words;
   xlitem *x_tmp;
   double logP, min1, min2, max_slist;
+  #ifdef CUSTOM_SELECTION_METRIC
+  double high_value = -INF, down_value = -INF;
+  #endif
 
   words = malloc(sizeof(int *) * L_extra);
   for (i = 0; i < L_extra; i++) {
@@ -570,11 +595,18 @@ void DecRate1(decoder_type *dd, int m, int n, int peak_lsiz) {
     }
   }
 
+  for (i = 0; i < cur_lsiz; i++) 
+
   // Partition and cut the list.
   if (cur_lsiz > peak_lsiz) {
     is_enough = 1; 
 
     qpartition(lorder, cur_lsiz, peak_lsiz);
+    #ifdef CUSTOM_SELECTION_METRIC
+    for (i = 0; i < peak_lsiz; i++) high_value = fmax(high_value, slist[lorder[i]]);
+    for (i = peak_lsiz; i < cur_lsiz; i++) down_value = fmax(down_value, slist[lorder[i]]);
+    min_abs_llr = high_value - down_value;
+    #endif
     if (node_counter > fstep || node_counter + n <= fstep) {
       while (cur_lsiz > peak_lsiz) frind[--frindp] = lorder[--cur_lsiz];
     }
@@ -615,6 +647,9 @@ void DecRepCode(decoder_type *dd, int m, int n, int peak_lsiz) {
   ylitem *yp1, *yp;
   xlitem *x_tmp;
   double sum_rate, max_slist;
+  #ifdef CUSTOM_SELECTION_METRIC
+  double high_value = -INF, down_value = -INF;
+  #endif
 
   x_tmp = (xlitem *)malloc(sizeof(xlitem));
 
@@ -657,6 +692,11 @@ void DecRepCode(decoder_type *dd, int m, int n, int peak_lsiz) {
     is_enough = 1;
 
     qpartition(lorder, cur_lsiz, peak_lsiz);
+    #ifdef CUSTOM_SELECTION_METRIC
+    for (i = 0; i < peak_lsiz; i++) high_value = fmax(high_value, slist[lorder[i]]);
+    for (i = peak_lsiz; i < cur_lsiz; i++) down_value = fmax(down_value, slist[lorder[i]]);
+    min_abs_llr = high_value - down_value;
+    #endif
     if (node_counter > fstep || node_counter + n <= fstep) {
       while (cur_lsiz > peak_lsiz) frind[--frindp] = lorder[--cur_lsiz];
     }
@@ -690,6 +730,9 @@ void DecSPCCode(decoder_type *dd, int m, int n, int peak_lsiz) {
   int **words;
   xlitem *x_tmp;
   double logP, *mins, max_slist;
+  #ifdef CUSTOM_SELECTION_METRIC
+  double high_value = -INF, down_value = -INF;
+  #endif
 
   cur_inds = (int *)malloc(sizeof(int) * 8);
   min_inds = (int *)malloc(sizeof(int) * 4);
@@ -802,6 +845,11 @@ void DecSPCCode(decoder_type *dd, int m, int n, int peak_lsiz) {
     is_enough = 1;
 
     qpartition(lorder, cur_lsiz, peak_lsiz);
+    #ifdef CUSTOM_SELECTION_METRIC
+    for (i = 0; i < peak_lsiz; i++) high_value = fmax(high_value, slist[lorder[i]]);
+    for (i = peak_lsiz; i < cur_lsiz; i++) down_value = fmax(down_value, slist[lorder[i]]);
+    min_abs_llr = high_value - down_value;
+    #endif
     if (node_counter > fstep || node_counter + n <= fstep) {
       while (cur_lsiz > peak_lsiz) frind[--frindp] = lorder[--cur_lsiz];
     }
