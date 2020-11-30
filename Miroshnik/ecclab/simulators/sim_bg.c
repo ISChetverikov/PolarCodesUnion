@@ -357,7 +357,10 @@ int sim_run(
 #endif // DEC_NEEDS_SIGMA
 
       int *var1 = malloc(sizeof(int) * c_n), *var2 = malloc(sizeof(int) * c_n), *var3 = malloc(sizeof(int) * c_n);
+      int *var_stat_1 = malloc(sizeof(int) * c_n), *var_stat_4 = malloc(sizeof(int) * c_n);
+      double *var_stat_2 = malloc(sizeof(double) * c_n), *var_stat_3 = malloc(sizeof(double) * c_n);
       for (i = 0; i < c_n; i++) var1[i] = var2[i] = var3[i] = 0;
+      for (i = 0; i < c_n; i++) var_stat_1[i] = var_stat_2[i] = var_stat_3[i] = var_stat_4[i] = 0;
 
       while (sim->trn[csnrn] < sim->trn_req[csnrn]) {
          
@@ -405,9 +408,10 @@ int sim_run(
          #endif
 
          #if defined LISTFLIPPINGTHRESHOLD
-            for (cur_th = 0; cur_th < max_threshold; cur_th++) {
+            #if !defined LLRPRECALCCOMP
+            /*for (cur_th = 0; cur_th < max_threshold; cur_th++) {
                var3[0] = 0;
-               if (dec_bpsk_list_flipping_threshold(sim->dc_inst, c_out, x_dec, c_n, sim->flip_alpha, var1, var2, var3, x, (double)cur_th)) {
+               if (dec_bpsk_list_flipping_threshold(sim->dc_inst, c_out, x_dec, sim->flip_num, sim->flip_alpha, var1, var2, var3, x, (double)cur_th)) {
                   err_msg("sim_run(): Error while decoding.");
                   return -1;
                }
@@ -418,7 +422,18 @@ int sim_run(
                   if (var3[0]) var2[0]++;
                }
                cnt_T_threshold[cur_th] += var1[0];
+            }*/
+            if (dec_bpsk_list_flipping_threshold(sim->dc_inst, c_out, x_dec, sim->flip_num, sim->flip_alpha, var_stat_1, var_stat_2, var_stat_3, var_stat_4, x, 1e6)) {
+               err_msg("sim_run(): Error while decoding.");
+               return -1;
             }
+            #endif
+            #if defined LLRPRECALCCOMP
+               if (dec_bpsk_list_flipping_comp(sim->dc_inst, c_out, x_dec, sim->flip_num, sim->flip_alpha, var1, var2, var3, x)) {
+                     err_msg("sim_run(): Error while decoding.");
+                     return -1;
+               }
+            #endif
          #endif
 
          #endif
@@ -477,12 +492,26 @@ int sim_run(
          }
       }
 
-      #if defined LISTFLIPPINGTHRESHOLD
-      printf("Number of CRC errors: %d\n", var2[0]);
+      #if defined LISTFLIPPINGTHRESHOLD && !defined LLRPRECALCCOMP
+      /*printf("Number of CRC errors: %d\n", var2[0]);
       printf("threshold FER T\n");
       for (cur_th = 0; cur_th < max_threshold; cur_th++) {
          printf("%d %f %f\n", cur_th, (double) cnt_errors_threshold[cur_th] / sim->trn_req[csnrn], (double) cnt_T_threshold[cur_th] / sim->trn_req[csnrn]);
-      }
+      }*/
+      /*printf("index cnt\n");
+      for (i = 0; i < c_n; i++) printf("%d %d\n", i, var_stat_1[i]);
+      printf("index meandiffmet meanerrmet numerrors rel\n");
+      for (i = 0; i < c_n; i++) printf("%d %f %f %d %f\n", i, var_stat_2[i] / (-var_stat_2[0]), var_stat_3[i] / var_stat_4[i], var_stat_4[i], (var_stat_2[i] / (-var_stat_2[0])) / (var_stat_3[i] / var_stat_4[i]));    
+      */
+      #endif
+
+      #if defined PRECALCCOVER
+      printf("ind freq\n");
+      for (i = 0; i < c_n; i++) printf("%d %d\n", i, var1[i]);
+      #endif
+      #if defined LLRCOVER
+      printf("ind freq\n");
+      for (i = 0; i < c_n; i++) printf("%d %d\n", i, var2[i]);
       #endif
 
       sim->csnrn = ++csnrn;
@@ -572,16 +601,16 @@ int sim_run(
    cdc_sizes[0] = 2, cdc_sizes[1] = 32;
    cdc_sizes[2] = 15, cdc_sizes[3] = 32;
    cdc_sizes[4] = 17, cdc_sizes[5] = 32;
-   cdc_sizes[6] = 2, cdc_sizes[7] = 32;
+   cdc_sizes[6] = 30, cdc_sizes[7] = 32;
 
 
    cdc_mats = (int **)malloc(sizeof(int *) * in_cd_len);
    cdc_mats[0] = (int *)malloc(sizeof(int) * 2 * 32);
    cdc_mats[1] = (int *)malloc(sizeof(int) * 15 * 32);
    cdc_mats[2] = (int *)malloc(sizeof(int) * 17 * 32);
-   cdc_mats[3] = (int *)malloc(sizeof(int) * 2 * 32);
+   cdc_mats[3] = (int *)malloc(sizeof(int) * 30 * 32);
 
-   cdc_opts[0] = 0, cdc_opts[1] = 0, cdc_opts[2] = 0, cdc_opts[3] = 1;
+   cdc_opts[0] = 0, cdc_opts[1] = 0, cdc_opts[2] = 0, cdc_opts[3] = 0;
 
    //TODO: перенести в init
 
@@ -647,9 +676,9 @@ int sim_run(
    }
    fclose(outer_code_inv3);
 
-   FILE* outer_code_inv4 = fopen("./GCCmats/sylvester7sub4.mat", "r");
+   FILE* outer_code_inv4 = fopen("./GCCmats/sylvester8.mat", "r");
 
-   for (i = 0; i < 2; i++) {
+   for (i = 0; i < 30; i++) {
       for (j = 0; j < 32; j++) {
          fscanf(outer_code_inv4, "%d", &el);
          cdc_mats[3][i * 32 + j] = el;
@@ -720,9 +749,9 @@ int sim_run(
          for (i = 0; i < c_k-30; i++) {
             if (x_dec[i] != x[i]) en++;
          }
-         for (i = 0; i < 32; i++) {
+         /*for (i = 0; i < 32; i++) {
             if (1 - 2 * x_dec[c_k - 30 + i] != c_in[c_n - 32 + i]) en++;
-         }
+         }*/
 
          for (i = 0; i < 2; i++) {
             if (x_dec[i] != x[i]) {
@@ -745,13 +774,24 @@ int sim_run(
             }
          }
 
-
-         for (i = 0; i < 32; i++) {
-            if (1 - 2 * x_dec[c_k - 30 + i] != c_in[c_n - 32 + i]) {
+         for (i = 34; i < 64; i++) {
+            if (x_dec[i] != x[i]) {
                err_nums4++;
                break;
             }
          }
+
+         for (i = 34; i < 64; i++) {
+            printf("%d %d\n", x_dec[i], x[i]);
+         }
+
+
+         /*for (i = 0; i < 32; i++) {
+            if (1 - 2 * x_dec[c_k - 30 + i] != c_in[c_n - 32 + i]) {
+               err_nums4++;
+               break;
+            }
+         }*/
 
          // Adjust error counters.
 

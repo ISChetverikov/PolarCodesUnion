@@ -120,6 +120,21 @@ dec_bpsk_list_flipping_opt(
    int *x
 );
 
+#ifdef LLRPRECALCCOMP
+int
+dec_bpsk_list_flipping_comp(
+   void *cdc,
+   double c_out[],
+   int x_dec[],
+   int T,
+   double alpha,
+   int *var1,
+   int *var2,
+   int *var3,
+   int *x
+);
+#endif
+
 #ifdef LISTFLIPPINGTHRESHOLD
 int
 dec_bpsk_list_flipping_threshold(
@@ -129,8 +144,9 @@ dec_bpsk_list_flipping_threshold(
    int T,
    double alpha,
    int *var1,
-   int *var2,
-   int *var3,
+   double *var2,
+   double *var3,
+   int *var4,
    int *x,
    double threshold
 );
