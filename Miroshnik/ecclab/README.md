@@ -19,6 +19,17 @@ To build with `make` run it in the project root directory.
 It will build executables to the `work` subdirectory.
 The provided makefile uses `gcc`, but it can be replaced with any other C compiler.
 
+## Example
+```
+mkdir cmake-build-release
+cd cmake-build-release
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --target install
+cd ..
+cd work
+./ca_polar_scl_bg ./bg_polar_params.spf
+```
+
 ## Running programs
 
 ### Typical usage
@@ -156,6 +167,7 @@ Keys:
 * `-DLISTFLIPPING -DLISTFLIPPINGOPT -DLISTFLIPPINGTHRESHOLD` - calculate FER with different threshold for |llr|
 * `-DLISTFLIPPINGPRECALC` - SCLFlip with precalc bits
 * `-DLISTFLIPPINGFAST` - SCLFlip with precalc bits and fast calculations for subcodes
+* `-DLISTFLIPPINGFAST -DCUSTOM_SELECTION_METRIC` - SCLFlip with "diff metrics" metric and fast calculations for subcodes
 * `-DGCCDEC` - Generalized Concatenated decoder for (128, 64) code.
 
 Specific simulation parameters:
