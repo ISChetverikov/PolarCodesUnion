@@ -351,10 +351,6 @@ void polar0_branch(
 #endif // FLIPPING
   }
 
-  #ifdef LISTFLIPPINGOPT
-  if (node_counter == fstep) fstep = -1;
-  #endif
-
   #ifdef LISTFLIPPING
   Malpha_cur[node_counter] = -INF;
   #endif // LISTFLIPPING
@@ -367,9 +363,9 @@ void polar0_branch(
     #ifdef LISTFLIPPING
     qpartition(lorder, cur_lsiz, peak_lsiz);
     #ifdef LISTFLIPPINGOPT
-    min1 = INF;
+    min1 = -INF;
     max2 = -INF;
-    for (i = 0; i < peak_lsiz; i++) min1 = fmin(min1, slist[lorder[i]]);
+    for (i = 0; i < peak_lsiz; i++) min1 = fmax(min1, slist[lorder[i]]);
     for (i = peak_lsiz; i < cur_lsiz; i++) max2 = fmax(max2, slist[lorder[i]]);
     /*min1 = max2 = 0;
     for (i = 0; i < peak_lsiz; i++) min1 += slist[lorder[i]];
