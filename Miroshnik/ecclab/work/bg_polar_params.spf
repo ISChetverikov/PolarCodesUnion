@@ -6,13 +6,13 @@ res_file results/test.srf
 
 % SNR values to simulate at.
 SNR_val_trn {
-   0      10000
-   0.5    30000
+%   0      10000
+%   0.5    30000
    1      30000
    1.5    30000
-%   2      100000
-%   2.5    100000
-%   3      800000
+   2      30000
+   2.5    30000
+   3      30000
 %   3.5    240000
 %   4      480000
 %   4.5    1800000
@@ -28,8 +28,8 @@ random_codeword on
 
 ml_lb on
 
-list_size 2
+list_size 4
 
-flips 5
+flips 15
 
 alpha 0.375
