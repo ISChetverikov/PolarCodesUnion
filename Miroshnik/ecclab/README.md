@@ -161,14 +161,10 @@ and decompose everything down to (0, 0) nodes. When no CRC is given, the decoder
 with the best metric as `dtrm_glp` would do. When CRC is set, the decoder picks the best candidate with the correct CRC.
 
 Keys:
-* `-DFLIPPING` - SCL with flipping bits
-* `-DLISTFLIPPING` - SCLFlip
-* `-DLISTFLIPPING -DLISTFLIPPINGOPT` - SCLFLip with 1 optimal flip
-* `-DLISTFLIPPING -DLISTFLIPPINGOPT -DLISTFLIPPINGTHRESHOLD` - calculate FER with different threshold for |llr|
-* `-DLISTFLIPPINGPRECALC` - SCLFlip with precalc bits
-* `-DLISTFLIPPINGFAST` - SCLFlip with precalc bits and fast calculations for subcodes
-* `-DLISTFLIPPINGFAST -DCUSTOM_SELECTION_METRIC` - SCLFlip with "diff metrics" metric and fast calculations for subcodes
-* `-DGCCDEC` - Generalized Concatenated decoder for (128, 64) code.
+* `-DLISTFLIPPING -DLISTFLIPPINGOPT -DLISTFLIPPINGTHRESHOLD -DDEC_NEEDS_SIGMA -DUSE_STDLIB_RND` - SCLFlip with "diff metrics" metric
+* `-DLISTFLIPPINGFAST -DCUSTOM_SELECTION_METRIC -DDEC_NEEDS_SIGMA -DUSE_STDLIB_RND` - SCLFlip with "diff metrics" metric and fast calculations for subcodes
+* `-DLISTFLIPPING -DLISTFLIPPINGOPT -DLISTFLIPPINGTHRESHOLD -DCSM1 -DDEC_NEEDS_SIGMA -DUSE_STDLIB_RND` - SCLFlip with "diff metrics full" metric
+* `-DLISTFLIPPINGFAST -DCUSTOM_SELECTION_METRIC -DCSMSUB1 -DDEC_NEEDS_SIGMA -DUSE_STDLIB_RND` - SCLFlip with "diff metrics full" metric and fast calculations for subcodes
 
 Specific simulation parameters:
 * `c_m m` - Polar m parameter. Integer, positive, non-zero. Required.
