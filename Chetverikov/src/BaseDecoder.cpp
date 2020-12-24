@@ -10,15 +10,12 @@ BaseDecoder::BaseDecoder(PolarCode * codePtr) {
 	
 }
 
-double BaseDecoder::GetSigma() {
-	return _sigma;
-}
 
 void BaseDecoder::SetSigma(double sigma) {
 	_sigma = sigma;
 }
 
-void BaseDecoder::SetCodeword(std::vector<int> codeword) {
+void BaseDecoder::SetDecoderAnswer(std::vector<int> codeword) {
 	_codeword = codeword;
 }
 

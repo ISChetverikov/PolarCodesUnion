@@ -9,41 +9,23 @@ MonteCarloSimulator::MonteCarloSimulator(int maxTestsCount,
 	int maxRejectionsCount,
 	PolarCode * codePtr,
 	Encoder * encoderPtr,
+	BaseChannel * channelPtr,
 	BaseDecoder * decoderPtr,
-	bool isSigmaDependOnR) : BaseSimulator(codePtr, encoderPtr, decoderPtr, isSigmaDependOnR)
+	bool isSigmaDependOnR) : BaseSimulator(codePtr, encoderPtr, channelPtr, decoderPtr, isSigmaDependOnR)
 {
 	_maxTestsCount = maxTestsCount;
 	_maxRejectionsCount = maxRejectionsCount;
-}
-
-double LlrToP1(double llr) {
-	if (llr > 300.0)
-		return 0.0;
-
-	if (llr < -300.0)
-		return 1.0;
-
-	return 1.0 / (1 + exp(llr));
-}
-
-double InputToLlr(double input, double sigma) {
-	return 2 * input / (sigma * sigma);
-}
-
-int ModulateBpsk(int input) {
-	return 1 - 2 * input;
 }
 
 SimulationIterationResults MonteCarloSimulator::Run(double snr)
 {	
 	SimulationIterationResults result;
 
-	std::random_device randomDevice;
 	size_t n = _codePtr->N();
 	size_t k = _codePtr->k();
 	std::vector<int> word(k, 0);
 	std::vector<int> codeword(n, 0);
-	std::vector<double> beliefs(n, 0);
+	std::vector<double> channelOuput(n, 0);
 	std::vector<int> decoded(n, 0);
 
 	auto t1 = std::chrono::steady_clock::now();
@@ -51,10 +33,13 @@ SimulationIterationResults MonteCarloSimulator::Run(double snr)
 	double sigma = GetSigma(snr, (double)k / n);
 	int tests = 0;
 	int wrong_dec = 0;
-	std::normal_distribution<double> normal_dist(0, sigma);
+	
+	std::random_device randomDevice;
 	std::uniform_int_distribution<> uniform_discrete_dist(0, 1);
 
+
 	_decoderPtr->SetSigma(sigma);
+	_channelPtr->SetSnr(snr);
 
 	while ((tests < _maxTestsCount || _maxTestsCount == -1) && (wrong_dec < _maxRejectionsCount)) {
 		tests++;
@@ -63,62 +48,14 @@ SimulationIterationResults MonteCarloSimulator::Run(double snr)
 
 		codeword = _encoderPtr->Encode(word);
 		// Give answer to a decoder for debugging or statistic retreving
-		_decoderPtr->SetCodeword(_encoderPtr->PolarTransform(codeword));
+		_decoderPtr->SetDecoderAnswer(_encoderPtr->PolarTransform(codeword));
 
-		for (size_t i = 0; i < n; i++) {
-			beliefs[i] = ModulateBpsk(codeword[i]) + normal_dist(randomDevice);
-			beliefs[i] = InputToLlr(beliefs[i], sigma);
-		}
-
-		auto domain = _decoderPtr->GetDomain();
-		if (domain == P1) {
-			for (size_t i = 0; i < n; i++)
-			{
-				beliefs[i] = LlrToP1(beliefs[i]);
-			}
-		}
+		channelOuput = _channelPtr->Pass(codeword);
 		
-		decoded = _decoderPtr->Decode(beliefs);
+		decoded = _decoderPtr->Decode(channelOuput);
 		if (tests % 1000 == 0)
 			std::cout << tests << std::endl;
-		// LIST4 parallel decoder
-		/*auto d = new ScListDecoder(_codePtr, 4);
-		auto de = d->Decode(beliefs);
-
-		if (false && de != decoded && de == word) {
-			std::cout << "Belief:\n{";
-			for (size_t i = 0; i < beliefs.size(); i++)
-			{
-				std::cout << beliefs[i] << ", ";
-			}
-			std::cout << "}" << std::endl;
-
-			std::cout << "Codeword:\n{";
-			for (size_t i = 0; i < codeword.size(); i++)
-			{
-				std::cout << codeword[i] << ", ";
-			}
-			std::cout << "}" << std::endl;
-
-			std::vector<int> extWord = _encoderPtr->PolarTransform(codeword);
-
-			std::cout << "ExtWord:\n{";
-			for (size_t i = 0; i < extWord.size(); i++)
-			{
-				std::cout << extWord[i] << ", ";
-			}
-			std::cout << "}" << std::endl;
-
-			std::cout << "Word:\n{";
-			for (size_t i = 0; i < word.size(); i++)
-			{
-				std::cout << word[i] << ", ";
-			}
-			std::cout << "}\n";
-
-			throw "Exit debug!";
-		}*/
-
+		
 		if (decoded != word)
 			wrong_dec += 1;
 	}

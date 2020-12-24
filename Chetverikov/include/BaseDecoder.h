@@ -22,11 +22,10 @@ public:
 
 	virtual domain GetDomain();
 	virtual void SetSigma(double sigma);
-	double GetSigma();
 	virtual std::vector<int> Decode(std::vector<double> llr) = 0;
 	
 	// methods for debugging and statistic retrieving
-	void SetCodeword(std::vector<int> codeword);
+	void SetDecoderAnswer(std::vector<int> codeword);
 	virtual std::string GetStatistic();
 	virtual void ClearStatistic();
 	

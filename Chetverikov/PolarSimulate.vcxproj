@@ -21,6 +21,9 @@
   <ItemGroup>
     <ClInclude Include="include\BaseSimulator.h" />
     <ClInclude Include="include\BaseDecoder.h" />
+    <ClInclude Include="include\BaseChannel.h" />
+    <ClInclude Include="include\BpskAwgnChannel.h" />
+    <ClInclude Include="include\BscChannel.h" />
     <ClInclude Include="include\CRC.h" />
     <ClInclude Include="include\Domain.h" />
     <ClInclude Include="include\Encoder.h" />
@@ -37,9 +40,8 @@
     <ClInclude Include="include\MonteCarloSimulator.h" />
     <ClInclude Include="include\ScCrcAidedDecoder.h" />
     <ClInclude Include="include\ScDecoder.h" />
-    <ClInclude Include="include\ScListDecoder.h" />
     <ClInclude Include="include\ScFlipFanoDecoder.h" />
-    <ClInclude Include="include\ScListFanoDecoder.h" />
+    <ClInclude Include="include\ScListDecoder.h" />
     <ClInclude Include="include\ScListFlipOracleStatDecoder.h" />
     <ClInclude Include="include\ScRecursiveDecoder.h" />
     <ClInclude Include="include\ScFanoDecoder.h" />
@@ -48,6 +50,9 @@
     <ClInclude Include="include\Simulate.h" />
     <ClInclude Include="include\SimulationParameters.h" />
     <ClInclude Include="include\SimulationType.h" />
+    <ClCompile Include="src\BaseChannel.cpp" />
+    <ClCompile Include="src\BpskAwgnChannel.cpp" />
+    <ClCompile Include="src\BscChannel.cpp" />
     <ClCompile Include="src\ScCrcAidedDecoder.cpp" />
     <ClInclude Include="include\ScListFlipStatDecoder.h" />
   </ItemGroup>
@@ -65,7 +70,6 @@
     <ClCompile Include="src\PolarCode.cpp" />
     <ClCompile Include="src\ScDecoder.cpp" />
     <ClCompile Include="src\ScFlipFanoDecoder.cpp" />
-    <ClCompile Include="src\ScListFanoDecoder.cpp" />
     <ClCompile Include="src\ScListFlipOracleStatDecoder.cpp" />
     <ClCompile Include="src\ScListFlipStatDecoder.cpp" />
     <ClCompile Include="src\ScListDecoder.cpp" />

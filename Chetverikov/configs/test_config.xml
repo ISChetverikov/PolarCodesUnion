@@ -1,24 +1,26 @@
 <Config>
     <Simulation>
-      <ResultFile>C:\Users\ische\source\repos\PolarCodes\results\128\sclfano8_delta51test1.results</ResultFile>
+      <ResultFile>C:\Users\ische\source\repos\PolarCodes\results\128\awgn.results</ResultFile>
       <AdditionalFile>C:\Users\ische\source\repos\PolarCodes\results\OracleStats\dummy.stat</AdditionalFile>
       <Simulator type="MC">
-        <Param name="maxTestsCount">100000</Param>
+        <Param name="maxTestsCount">1000000</Param>
         <Param name="maxRejectionsCount">1000</Param>
         <Param name="isSigmaDependOnR">0</Param>
+        <Param name="channel">BPSK-AWGN</Param>
+        <Param name="channel1">BSC</Param>
       </Simulator>
-      <SnrRange start="-1.5" stop="1.0" step="0.5"></SnrRange>
+      <SnrRange start="-3" stop="0.0" step="0.5"></SnrRange>
       <SnrArray>
       </SnrArray>
       <Code type="Polar">
         <Param name="m">7</Param>
-        <Param name="k">56</Param>
+        <Param name="k">64</Param>
         <Param name="sequenceFile">C:\Users\ische\source\repos\PolarCodes\polar_sequences\128.txt</Param>
         <Param name="CRC24">100000000000000001100011</Param>
         <Param name="CRC12">100000001111</Param>
-        <Param name="CRC">00000111</Param>
+        <Param name="CRC1s">00000111</Param>
       </Code>
-      <Decoder type="SCLFano">
+      <Decoder type="SC">
     
         <!--SC Flip Progressive decoder params-->
         <Param name="gammaLeft">4</Param>

@@ -11,9 +11,9 @@ protected:
 	int _maxTestsCount = 0;
 	int _maxRejectionsCount = 0;
 	
-
 public:
-	MonteCarloSimulator(int maxTests, int rejectionsCount, PolarCode * codePtr, Encoder * encoderPtr, BaseDecoder * decoderPtr, bool isSigmaDependOnR);
+	MonteCarloSimulator(int maxTests, int rejectionsCount, PolarCode * codePtr, Encoder * encoderPtr,
+		BaseChannel * channelPtr, BaseDecoder * decoderPtr, bool isSigmaDependOnR);
 	~MonteCarloSimulator() {};
 	SimulationIterationResults Run(double snr) override;
 };

@@ -1,8 +1,9 @@
 #include "../include/BaseSimulator.h"
 
-BaseSimulator::BaseSimulator(PolarCode * codePtr, Encoder * encoderPtr, BaseDecoder * decoderPtr, bool isSigmaDependOnR) {
+BaseSimulator::BaseSimulator(PolarCode * codePtr, Encoder * encoderPtr, BaseChannel * channelPtr, BaseDecoder * decoderPtr, bool isSigmaDependOnR) {
 	_decoderPtr = decoderPtr;
 	_encoderPtr = encoderPtr;
+	_channelPtr = channelPtr;
 	_codePtr = codePtr;
 	_isSigmaDependOnR = isSigmaDependOnR;
 }
