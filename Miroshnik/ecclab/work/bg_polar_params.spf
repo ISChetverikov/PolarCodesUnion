@@ -1,18 +1,18 @@
-include codes/polar/polar8_ca9_CF_k128.txt
+include codes/polar/polar8_ca16_CF_k128.txt
 
 % Results file.
-%res_file results/bg_polar9_ca16_CF_k256_L8_T45_subcodes_dm_SNR25.srf
+%res_file results/bg_polar7_ca16_CF_k64_L8_T10_dm_pw.srf
 res_file results/test.srf
 
 % SNR values to simulate at.
 SNR_val_trn {
-%   0      10000
-%   0.5    30000
-   1      30000
-   1.5    30000
-   2      30000
+   0      3000
+   0.5    3000
+   1      5000
+   1.5    10000
+   2      20000
    2.5    30000
-   3      30000
+%   3      600000
 %   3.5    240000
 %   4      480000
 %   4.5    1800000
@@ -30,6 +30,6 @@ ml_lb on
 
 list_size 4
 
-flips 15
+flips 10
 
 alpha 0.375

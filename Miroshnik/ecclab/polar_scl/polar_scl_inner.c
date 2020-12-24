@@ -286,6 +286,9 @@ void polar0_branch(
   min_abs_llr = INF;
   double min1, max2;
   #endif
+  #ifdef CSM1
+  double al;
+  #endif
 
 #ifdef DBG
   printf("rm00 branch.\n");
@@ -335,12 +338,9 @@ void polar0_branch(
       }
     }
     if (max_slist < slist[cur_ind0]) {
-      //min_abs_llr = fmin(min_abs_llr, fabs(y));
-  //if (node_counter > 47) if (!tekker) printf("0\n");
       min_abs_llr = fabs(y);
       max_slist = slist[cur_ind0];
     }
-    //if (node_counter > 47) printf("%f %f %f ", slist[cur_ind1] - EST0_TO_LNP1(y), slist[cur_ind0], slist[cur_ind1]);
     #endif
 
     
@@ -358,6 +358,7 @@ void polar0_branch(
 #ifdef DBG
   print_list("b");
 #endif
+  min_abs_llr = INF;
   // Partition and cut the list.
   if (cur_lsiz > peak_lsiz) { 
     #ifdef LISTFLIPPING
@@ -367,12 +368,28 @@ void polar0_branch(
     max2 = -INF;
     for (i = 0; i < peak_lsiz; i++) min1 = fmax(min1, slist[lorder[i]]);
     for (i = peak_lsiz; i < cur_lsiz; i++) max2 = fmax(max2, slist[lorder[i]]);
+    min_abs_llr = min1 - max2;
     /*min1 = max2 = 0;
     for (i = 0; i < peak_lsiz; i++) min1 += slist[lorder[i]];
     for (i = peak_lsiz; i < cur_lsiz; i++) max2 += slist[lorder[i]];
     min1 /= peak_lsiz;
-    max2 /= (cur_lsiz - peak_lsiz);*/
-    min_abs_llr = min1 - max2;
+    max2 /= (cur_lsiz - peak_lsiz);
+    min_abs_llr = min1 - max2;*/
+    #ifdef CSM1
+    min1 = INF;
+    for (i = 0; i < peak_lsiz; i++) min1 = fmin(min1, -slist[lorder[i]]);
+    max2 = 0;
+    for (i = 0; i < peak_lsiz; i++) {
+      max2 += exp(slist[lorder[i]] + min1);
+    }
+    min_abs_llr = log(max2);
+    al = 1;
+    max2 = 0;
+    for (i = peak_lsiz; i < cur_lsiz; i++) {
+      max2 += exp(slist[lorder[i]] + min1);
+    }
+    min_abs_llr -= al * log(max2);
+    #endif
     #endif
     ALPHA_CALC(slist_alpha, lorder, peak_lsiz, cur_lsiz, Malpha_cur, node_counter);
     if (node_counter != fstep) {
@@ -519,6 +536,9 @@ void DecRate1(decoder_type *dd, int m, int n, int peak_lsiz) {
   #ifdef CUSTOM_SELECTION_METRIC
   double high_value = -INF, down_value = -INF;
   #endif
+  #ifdef CSMSUB1
+  double temp_val1, temp_val2, al;
+  #endif
 
   words = malloc(sizeof(int *) * L_extra);
   for (i = 0; i < L_extra; i++) {
@@ -603,6 +623,21 @@ void DecRate1(decoder_type *dd, int m, int n, int peak_lsiz) {
     for (i = peak_lsiz; i < cur_lsiz; i++) down_value = fmax(down_value, slist[lorder[i]]);
     min_abs_llr = high_value - down_value;
     #endif
+    #ifdef CSMSUB1
+    temp_val1 = INF;
+    for (i = 0; i < peak_lsiz; i++) temp_val1 = fmin(temp_val1, -slist[lorder[i]]);
+    temp_val2 = 0;
+    for (i = 0; i < peak_lsiz; i++) {
+      temp_val2 += exp(slist[lorder[i]] + temp_val1);
+    }
+    min_abs_llr = log(temp_val2);
+    al = 1;
+    temp_val2 = 0;
+    for (i = peak_lsiz; i < cur_lsiz; i++) {
+      temp_val2 += exp(slist[lorder[i]] + temp_val1);
+    }
+    min_abs_llr -= al * log(temp_val2);
+    #endif
     if (node_counter > fstep || node_counter + n <= fstep) {
       while (cur_lsiz > peak_lsiz) frind[--frindp] = lorder[--cur_lsiz];
     }
@@ -645,6 +680,9 @@ void DecRepCode(decoder_type *dd, int m, int n, int peak_lsiz) {
   double sum_rate, max_slist;
   #ifdef CUSTOM_SELECTION_METRIC
   double high_value = -INF, down_value = -INF;
+  #endif
+  #ifdef CSMSUB1
+  double temp_val1, temp_val2, al;
   #endif
 
   x_tmp = (xlitem *)malloc(sizeof(xlitem));
@@ -693,6 +731,21 @@ void DecRepCode(decoder_type *dd, int m, int n, int peak_lsiz) {
     for (i = peak_lsiz; i < cur_lsiz; i++) down_value = fmax(down_value, slist[lorder[i]]);
     min_abs_llr = high_value - down_value;
     #endif
+    #ifdef CSMSUB1
+    temp_val1 = INF;
+    for (i = 0; i < peak_lsiz; i++) temp_val1 = fmin(temp_val1, -slist[lorder[i]]);
+    temp_val2 = 0;
+    for (i = 0; i < peak_lsiz; i++) {
+      temp_val2 += exp(slist[lorder[i]] + temp_val1);
+    }
+    min_abs_llr = log(temp_val2);
+    al = 1;
+    temp_val2 = 0;
+    for (i = peak_lsiz; i < cur_lsiz; i++) {
+      temp_val2 += exp(slist[lorder[i]] + temp_val1);
+    }
+    min_abs_llr -= al * log(temp_val2);
+    #endif
     if (node_counter > fstep || node_counter + n <= fstep) {
       while (cur_lsiz > peak_lsiz) frind[--frindp] = lorder[--cur_lsiz];
     }
@@ -728,6 +781,9 @@ void DecSPCCode(decoder_type *dd, int m, int n, int peak_lsiz) {
   double logP, *mins, max_slist;
   #ifdef CUSTOM_SELECTION_METRIC
   double high_value = -INF, down_value = -INF;
+  #endif
+  #ifdef CSMSUB1
+  double temp_val1, temp_val2, al;
   #endif
 
   cur_inds = (int *)malloc(sizeof(int) * 8);
@@ -845,6 +901,21 @@ void DecSPCCode(decoder_type *dd, int m, int n, int peak_lsiz) {
     for (i = 0; i < peak_lsiz; i++) high_value = fmax(high_value, slist[lorder[i]]);
     for (i = peak_lsiz; i < cur_lsiz; i++) down_value = fmax(down_value, slist[lorder[i]]);
     min_abs_llr = high_value - down_value;
+    #endif
+    #ifdef CSMSUB1
+    temp_val1 = INF;
+    for (i = 0; i < peak_lsiz; i++) temp_val1 = fmin(temp_val1, -slist[lorder[i]]);
+    temp_val2 = 0;
+    for (i = 0; i < peak_lsiz; i++) {
+      temp_val2 += exp(slist[lorder[i]] + temp_val1);
+    }
+    min_abs_llr = log(temp_val2);
+    al = 1;
+    temp_val2 = 0;
+    for (i = peak_lsiz; i < cur_lsiz; i++) {
+      temp_val2 += exp(slist[lorder[i]] + temp_val1);
+    }
+    min_abs_llr -= al * log(temp_val2);
     #endif
     if (node_counter > fstep || node_counter + n <= fstep) {
       while (cur_lsiz > peak_lsiz) frind[--frindp] = lorder[--cur_lsiz];

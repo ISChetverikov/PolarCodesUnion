@@ -1335,15 +1335,11 @@ dec_bpsk_list_flipping_comp(
       }
       fclose(precalc_bits);
 
-      //for (i = 0; i < T; i++) printf("%d %d\n", i, Malpha_maxs[i]);
-
       for (i = 0; i < dd->c_n; i++) {
          comp_metric[Malpha_maxs[i]] += a * (dd->c_n - i);
       }
 
       find_lowest_llrs_threshold(min_abs_llrs, dd->c_n, dd->c_n, Malpha_maxs, 1e6);
-
-      //for (i = 0; i < T; i++) printf("%d %d\n", i, Malpha_maxs[i]);
 
       for (i = 0; i < dd->c_n; i++) {
          if (Malpha_maxs[i] == -1) break;
@@ -1352,14 +1348,11 @@ dec_bpsk_list_flipping_comp(
 
       find_top_metrics(comp_metric, dd->c_n, T, Malpha_maxs);
 
-      //for (i = 0; i < T; i++) printf("%d %d\n", i, Malpha_maxs[i]);
-
       for (q = 0; q < T; q++) {
          polar_dec(&(dd->dc), dec_input, x_candidates, NULL, NULL, -1, Malpha_maxs[q], alpha, Malpha, NULL, NULL, x, min_abs_llrs);
          x[0] = x0;
          best_ind = check_crc_list(x_candidates, dd->eff_k, dd->dc.peak_lsiz, dd->crc, dd->crc_len);
          if (best_ind != -1) {
-            //printf("%d %d\n", q, Malpha_maxs[q]);
             memcpy(x_dec, x_candidates + best_ind * dd->c_k, dd->eff_k * sizeof(int));
             break;
          }
@@ -1451,6 +1444,7 @@ dec_bpsk_list_flipping_threshold(
       }
    }
    find_lowest_llrs_threshold(min_abs_llrs, dd->c_n, T, Malpha_maxs, threshold);
+
    for (q = 0; q < dd->c_n; q++) {
       if (max_diff_pos == -1) break;
       if (Malpha_maxs[q] == max_diff_pos) {
