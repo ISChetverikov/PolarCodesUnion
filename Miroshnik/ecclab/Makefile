@@ -14,7 +14,7 @@ all: $(BUILD_DIR) $(BUILD_DIR)/ca_polar_scl_bg #$(BUILD_DIR)/dtrm0_bg $(BUILD_DI
 #	$(CC) -DFLIPPING -DRETURNLLRS -DDEC_NEEDS_SIGMA -DDEC_NEEDS_CSNRN -DUSE_STDLIB_RND -o $@ $^ -lm
 
 $(BUILD_DIR)/ca_polar_scl_bg: polar_scl/polar_scl_inner.c polar_scl/ca_polar_scl_main.c common/srm_utils.c common/spf_par.c common/ui_txt.c simulators/sim_bg.c simulators/main_txt.c
-	$(CC) -DLISTFLIPPING -DLISTFLIPPINGOPT -DLISTFLIPPINGTHRESHOLD -DDEC_NEEDS_SIGMA -DUSE_STDLIB_RND -o $@ $^ -lm
+	$(CC) -DLISTFLIPPINGFAST -DCUSTOM_SELECTION_METRIC -DDEC_NEEDS_SIGMA -DUSE_STDLIB_RND -o $@ $^ -lm
 
 $(BUILD_DIR):
 	mkdir $@
